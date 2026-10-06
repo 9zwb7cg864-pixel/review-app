@@ -3,48 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RECUR - Smart Interval Review</title>
-    <!-- Supabase JS SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <title>RECUR - Review Manager</title>
     <style>
         :root {
-            --bg-color: #f7f4ef;
+            --bg-color: #f7f5f0;
             --card-bg: #ffffff;
-            --text-main: #3e3226;
-            --text-sub: #8c7a6b;
-            --accent: #b08968;
-            --accent-hover: #9c7553;
-            --border: #e6dfd5;
-            --shadow: rgba(62, 50, 38, 0.05);
-            --dot-bg: #d4c5b9;
+            --text-main: #2b2621;
+            --text-sub: #8c8279;
+            --border: #e6e2db;
+            --accent: #5c4b41;
+            --accent-hover: #4a3c34;
+            --danger: #c85a53;
+            --success: #5a8a62;
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 650px;
-            background: var(--card-bg);
-            border-radius: 20px;
-            box-shadow: 0 10px 30px var(--shadow);
-            padding: 24px;
-            margin-bottom: 40px;
-            border: 1px solid var(--border);
+            padding: 20px 16px;
+            max-width: 500px;
+            margin: 0 auto;
+            padding-bottom: 90px;
         }
 
         header {
@@ -52,204 +39,1254 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 24px;
+            padding-bottom: 8px;
             border-bottom: 1px solid var(--border);
-            padding-bottom: 16px;
         }
 
-        h1 {
-            font-size: 24px;
+        .brand {
+            font-size: 0.9rem;
+            letter-spacing: 3px;
             font-weight: 700;
-            letter-spacing: -0.5px;
-            color: var(--text-main);
+            color: var(--accent);
         }
 
-        .user-info {
-            font-size: 13px;
-            color: var(--text-sub);
+        .header-right {
             display: flex;
-            gap: 10px;
             align-items: center;
+            gap: 12px;
         }
 
-        button {
-            background-color: var(--accent);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 10px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        button:hover {
-            background-color: var(--accent-hover);
-        }
-
-        button.secondary {
-            background-color: transparent;
+        .date-display {
+            font-size: 0.85rem;
             color: var(--text-sub);
-            border: 1px solid var(--border);
+            font-weight: 500;
         }
 
-        button.secondary:hover {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-        }
-
-        /* 認証画面 */
-        #auth-screen {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            padding: 20px 0;
-        }
-
-        #auth-screen input {
-            width: 100%;
-            padding: 12px 16px;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            font-size: 15px;
-            background: var(--bg-color);
-            color: var(--text-main);
-        }
-
-        .auth-toggle {
-            text-align: center;
-            font-size: 13px;
-            color: var(--text-sub);
-            cursor: pointer;
-            margin-top: 8px;
-        }
-
-        .auth-toggle span {
+        .user-badge {
+            font-size: 0.75rem;
+            background: #ede8e1;
+            padding: 4px 8px;
+            border-radius: 6px;
             color: var(--accent);
             font-weight: 600;
+            cursor: pointer;
         }
 
-        /* アプリ本体 */
-        #app-screen {
-            display: none;
-        }
-
-        .task-form {
+        /* ログイン画面 */
+        .auth-container {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            justify-content: center;
+            align-items: center;
+            min-height: 70vh;
+            text-align: center;
+        }
+
+        .auth-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 32px 24px;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+            border: 1px solid rgba(0,0,0,0.02);
+        }
+
+        .auth-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--accent);
+            letter-spacing: 2px;
+        }
+
+        .auth-subtitle {
+            font-size: 0.85rem;
+            color: var(--text-sub);
             margin-bottom: 24px;
         }
 
-        .task-form input, .task-form select {
-            padding: 12px 16px;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            font-size: 15px;
-            background: var(--bg-color);
-            color: var(--text-main);
-        }
-
-        .task-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .task-card {
+        /* 直近数日のタスク量ヒートマップ */
+        .heatmap-card {
             background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 14px;
+            border-radius: 16px;
             padding: 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            position: relative;
-            transition: transform 0.2s;
+            margin-bottom: 16px;
+            border: 1px solid rgba(0,0,0,0.02);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
         }
 
-        .task-card:hover {
-            border-color: var(--accent);
+        .heatmap-title {
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+            color: var(--text-sub);
+            font-weight: 600;
+            margin-bottom: 12px;
         }
 
-        .task-header {
+        .heatmap-grid {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-        }
-
-        .task-title {
-            font-weight: 600;
-            font-size: 16px;
-        }
-
-        .task-meta {
-            font-size: 13px;
-            color: var(--text-sub);
-        }
-
-        /* 5段階評価ボタン */
-        .rating-buttons {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
+            align-items: flex-end;
             gap: 4px;
-            margin-top: 4px;
+            height: 80px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid var(--border);
         }
 
-        .rating-btn {
-            padding: 6px 2px;
-            font-size: 11px;
-            background: var(--bg-color);
-            color: var(--text-main);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            cursor: pointer;
+        .heatmap-day-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+            justify-content: flex-end;
+            gap: 2px;
+            position: relative;
+        }
+
+        .heatmap-dot {
+            width: 7px;
+            height: 7px;
+            background-color: var(--border);
+            border-radius: 50%;
+            transition: background-color 0.2s;
+            flex-shrink: 0;
+        }
+
+        .heatmap-dot.active {
+            background-color: var(--accent);
+        }
+
+        .heatmap-overflow {
+            font-size: 0.55rem;
+            font-weight: bold;
+            color: var(--accent);
+            margin-bottom: 2px;
+        }
+
+        .heatmap-day-label {
+            font-size: 0.6rem;
+            color: var(--text-sub);
+            margin-top: 4px;
             text-align: center;
         }
 
-        .rating-btn:hover {
+        /* 統計サマリーパネル */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 16px;
+            border: 1px solid rgba(0,0,0,0.02);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+            color: var(--text-sub);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        /* ナビゲーションタブ */
+        .nav-tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 24px;
+            background: #ede8e1;
+            padding: 4px;
+            border-radius: 12px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            background: transparent;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-sub);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            background: var(--card-bg);
+            color: var(--text-main);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        }
+
+        .view-section {
+            display: none;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        .app-container {
+            display: none;
+        }
+        .app-container.active {
+            display: block;
+        }
+
+        /* カード・UIパーツ */
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            border: 1px solid rgba(0,0,0,0.02);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.1s ease, background-color 0.2s ease;
+            text-align: center;
+        }
+
+        .btn:active {
+            transform: scale(0.96);
+        }
+
+        .btn-primary {
+            background-color: var(--accent);
+            color: white;
+        }
+        .btn-primary:active {
+            background-color: var(--accent-hover);
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 14px;
+        }
+
+        .btn-complete {
+            background-color: var(--accent);
+            color: white;
+            flex: 2;
+        }
+
+        .btn-postpone {
+            background-color: #f2eee9;
+            color: var(--text-main);
+            flex: 1;
+            border: 1px solid var(--border);
+        }
+
+        /* 5段階評価パネル */
+        .rating-box {
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .rating-prompt {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-sub);
+            margin-bottom: 8px;
+        }
+
+        .rating-buttons {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-rate {
+            flex: 1;
+            padding: 8px 0;
+            background: #faf8f5;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.1s ease;
+        }
+
+        .btn-rate:hover {
             background: var(--accent);
             color: white;
             border-color: var(--accent);
         }
 
-        /* ダッシュボード・丸が積み上がるヒートマップ */
-        .dashboard-section {
-            margin-top: 28px;
-            padding-top: 20px;
-            border-top: 1px solid var(--border);
+        /* モーダルウィンドウ */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
         }
 
-        .dashboard-title {
-            font-size: 14px;
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-card {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 400px;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            animation: modalPop 0.2s ease-out;
+        }
+
+        @keyframes modalPop {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .modal-close-btn {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: var(--text-sub);
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .curve-chart-wrap {
+            background: #faf8f5;
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid var(--border);
+            margin-bottom: 16px;
+        }
+
+        .curve-chart-header {
+            font-size: 0.75rem;
+            font-weight: 600;
             color: var(--text-sub);
             margin-bottom: 12px;
-            font-weight: 600;
-        }
-        
-        .heatmap-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 8px;
+            display: flex;
+            justify-content: space-between;
         }
 
-        .heatmap-column {
-            background: var(--bg-color);
+        .form-group {
+            margin-bottom: 16px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-sub);
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="text"], input[type="date"], select {
+            width: 100%;
+            padding: 12px;
             border: 1px solid var(--border);
             border-radius: 10px;
-            padding: 8px;
+            font-size: 1rem;
+            background: #faf8f5;
+            color: var(--text-main);
+            outline: none;
+        }
+
+        input[type="text"]:focus, input[type="date"]:focus, select:focus {
+            border-color: var(--accent);
+        }
+
+        .task-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            cursor: pointer;
+        }
+        .task-title:hover {
+            color: var(--accent);
+        }
+
+        .task-meta {
+            font-size: 0.8rem;
+            color: var(--text-sub);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .badge {
+            font-size: 0.7rem;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+        .badge-today { background: #edf4ee; color: var(--success); }
+        .badge-overdue { background: #fdf2f1; color: var(--danger); }
+
+        .empty-state {
+            text-align: center;
+            color: var(--text-sub);
+            padding: 30px 0;
+            font-size: 0.9rem;
+        }
+
+        /* カレンダービュー */
+        .calendar-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .calendar-nav button {
+            background: none;
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+        .cal-day-header {
+            font-size: 0.75rem;
+            color: var(--text-sub);
+            padding: 4px 0;
+        }
+        .cal-cell {
+            aspect-ratio: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 6px;
-            min-height: 110px;
+            justify-content: center;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            background: #faf8f5;
+            border: 1px solid transparent;
+            position: relative;
+        }
+        .cal-cell.has-task::after {
+            content: '';
+            width: 5px;
+            height: 5px;
+            background-color: var(--accent);
+            border-radius: 50%;
+            position: absolute;
+            bottom: 4px;
+        }
+        .cal-cell.selected {
+            border-color: var(--accent);
+            font-weight: bold;
+            background: #f2eee9;
+        }
+        .cal-cell.other-month {
+            color: #d1cbc3;
         }
 
-        .heatmap-date {
-            font-size: 11px;
-            color: var(--text-sub);
-            font-weight: 600;
+        .delete-text {
+            background: none;
+            border: none;
+            color: var(--danger);
+            font-size: 0.75rem;
+            cursor: pointer;
+            padding: 4px 0;
         }
 
-        .dots-container {
-            display: flex;
-            flex-direction: column-reverse; /* 下から積み上がる */
+        .preset-tag {
+            display: inline-flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #faf8f5;
+            border: 1px solid var(--border);
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            font-size: 0.85rem;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ログイン画面 -->
+    <div id="view-auth" class="auth-container">
+        <div class="auth-card">
+            <div class="auth-title">RECUR</div>
+            <div class="auth-subtitle">復習管理マネージャー</div>
+            <div class="form-group">
+                <label>ユーザー名を入力</label>
+                <input type="text" id="login-username" placeholder="例：taro / study_user">
+            </div>
+            <button class="btn btn-primary" onclick="handleLogin()">ログイン / はじめる</button>
+        </div>
+    </div>
+
+    <!-- アプリ本体（ログイン後に表示） -->
+    <div id="app-main" class="app-container">
+        <header>
+            <div class="brand">RECUR</div>
+            <div class="header-right">
+                <div class="date-display" id="header-date"></div>
+                <div class="user-badge" id="current-user-display" onclick="logout()" title="クリックしてログアウト"></div>
+            </div>
+        </header>
+
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="switchTab('today')">今日</button>
+            <button class="tab-btn" onclick="switchTab('calendar')">カレンダー</button>
+            <button class="tab-btn" onclick="switchTab('add')">新規作成</button>
+            <button class="tab-btn" onclick="switchTab('presets')">間隔設定</button>
+            <button class="tab-btn" onclick="switchTab('list')">一覧</button>
+        </div>
+
+        <!-- 今日の復習画面 -->
+        <div id="view-today" class="view-section active">
+            <div class="heatmap-card">
+                <div class="heatmap-title">直近7日間のタスク量</div>
+                <div class="heatmap-grid" id="heatmap-grid"></div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">RETENTION</div>
+                    <div class="stat-value" id="stat-retention">100%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">BACKLOG</div>
+                    <div class="stat-value" id="stat-backlog">0</div>
+                </div>
+            </div>
+
+            <div id="today-task-list"></div>
+        </div>
+
+        <!-- カレンダー画面 -->
+        <div id="view-calendar" class="view-section">
+            <div class="card">
+                <div class="calendar-nav">
+                    <button class="btn" style="width:auto;" onclick="changeMonth(-1)">&lt;</button>
+                    <span id="cal-month-title" style="font-weight: 600;"></span>
+                    <button class="btn" style="width:auto;" onclick="changeMonth(1)">&gt;</button>
+                </div>
+                <div class="calendar-grid" id="calendar-grid"></div>
+            </div>
+            <div class="card">
+                <h3 id="selected-date-title" style="font-size: 0.9rem; margin-bottom: 12px; color: var(--text-sub);">日付を選択してください</h3>
+                <div id="calendar-day-tasks"></div>
+            </div>
+        </div>
+
+        <!-- 新規作成画面 -->
+        <div id="view-add" class="view-section">
+            <div class="card">
+                <div class="form-group">
+                    <label>タスク名</label>
+                    <input type="text" id="task-name" placeholder="例：英単語 / 第3章の復習">
+                </div>
+                <div class="form-group">
+                    <label>開始日（復習をスタートする日）</label>
+                    <input type="date" id="task-start-date">
+                </div>
+                <div class="form-group">
+                    <label>復習間隔プリセットを選択</label>
+                    <select id="task-preset-select"></select>
+                </div>
+                <button class="btn btn-primary" onclick="createTask()">タスクを追加する</button>
+            </div>
+        </div>
+
+        <!-- プリセット管理画面 -->
+        <div id="view-presets" class="view-section">
+            <div class="card">
+                <h3 style="font-size: 0.95rem; margin-bottom: 12px;">新しい間隔プリセットを追加</h3>
+                <div class="form-group">
+                    <label>プリセット名</label>
+                    <input type="text" id="preset-name" placeholder="例：じっくりコース、暗記用など">
+                </div>
+                <div class="form-group">
+                    <label>復習間隔（日数をカンマ区切りで入力）</label>
+                    <input type="text" id="preset-intervals" placeholder="例: 1, 3, 7, 14, 30">
+                </div>
+                <button class="btn btn-primary" onclick="createPreset()">プリセットを保存</button>
+            </div>
+            <div class="card">
+                <h3 style="font-size: 0.95rem; margin-bottom: 12px;">登録済みのプリセット</h3>
+                <div id="preset-list"></div>
+            </div>
+        </div>
+
+        <!-- 全タスク管理画面 -->
+        <div id="view-list" class="view-section">
+            <div id="all-task-list"></div>
+        </div>
+    </div>
+
+    <!-- グラフ表示用ポップアップ（モーダル） -->
+    <div class="modal-overlay" id="chart-modal" onclick="closeChartModal(event)">
+        <div class="modal-card" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div class="modal-title" id="modal-task-name">タスク名</div>
+                <button class="modal-close-btn" onclick="closeChartModal()">✕</button>
+            </div>
+            <div id="modal-chart-content"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = localStorage.getItem('recur_current_user') || null;
+        let db = { presets: [], tasks: [] };
+
+        let currentDate = new Date();
+        let selectedDateStr = formatDateStr(new Date());
+
+        function loadUserData() {
+            if (!currentUser) return;
+            const data = localStorage.getItem(`recur_db_${currentUser}`);
+            if (data) {
+                db = JSON.parse(data);
+            } else {
+                // デフォルトのプリセット
+                db = {
+                    presets: [
+                        { id: 'p1', name: 'スタンダード (1, 3, 7, 14, 30日)', intervals: [1, 3, 7, 14, 30] },
+                        { id: 'p2', name: '短期集中 (1, 2, 4, 7日)', intervals: [1, 2, 4, 7] }
+                    ],
+                    tasks: []
+                };
+                saveData();
+            }
+        }
+
+        function saveData() {
+            if (!currentUser) return;
+            localStorage.setItem(`recur_db_${currentUser}`, JSON.stringify(db));
+        }
+
+        function handleLogin() {
+            const input = document.getElementById('login-username');
+            const username = input.value.trim();
+            if (!username) {
+                alert('ユーザー名を入力してください');
+                return;
+            }
+            currentUser = username;
+            localStorage.setItem('recur_current_user', currentUser);
+            input.value = '';
+            initApp();
+        }
+
+        function logout() {
+            if (confirm(`ユーザー "${currentUser}" からログアウトしますか？`)) {
+                localStorage.removeItem('recur_current_user');
+                currentUser = null;
+                document.getElementById('app-main').classList.remove('active');
+                document.getElementById('view-auth').style.display = 'flex';
+            }
+        }
+
+        function formatDateStr(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function addDays(dateStr, days) {
+            const [y, m, d] = dateStr.split('-').map(Number);
+            const date = new Date(y, m - 1, d);
+            date.setDate(date.getDate() + days);
+            return formatDateStr(date);
+        }
+
+        function diffDays(dateStr1, dateStr2) {
+            const [y1, m1, d1] = dateStr1.split('-').map(Number);
+            const [y2, m2, d2] = dateStr2.split('-').map(Number);
+            const dt1 = new Date(y1, m1 - 1, d1);
+            const dt2 = new Date(y2, m2 - 1, d2);
+            return Math.round((dt2 - dt1) / (1000 * 60 * 60 * 24));
+        }
+
+        window.onload = function() {
+            if (currentUser) {
+                initApp();
+            } else {
+                document.getElementById('view-auth').style.display = 'flex';
+                document.getElementById('app-main').classList.remove('active');
+            }
+        };
+
+        function initApp() {
+            loadUserData();
+            document.getElementById('view-auth').style.display = 'none';
+            document.getElementById('app-main').classList.add('active');
+            document.getElementById('current-user-display').textContent = `👤 ${currentUser} (切替)`;
+
+            const options = { weekday: 'short', month: 'short', day: 'numeric' };
+            document.getElementById('header-date').textContent = new Date().toLocaleDateString('en-US', options);
+            
+            const startDateInput = document.getElementById('task-start-date');
+            if (startDateInput) {
+                startDateInput.value = formatDateStr(new Date());
+            }
+
+            renderAll();
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+
+            const tabMap = { today: 0, calendar: 1, add: 2, presets: 3, list: 4 };
+            document.querySelectorAll('.tab-btn')[tabMap[tabName]].classList.add('active');
+            document.getElementById(`view-${tabName}`).classList.add('active');
+            
+            if (tabName === 'add') {
+                const startDateInput = document.getElementById('task-start-date');
+                if (startDateInput && !startDateInput.value) {
+                    startDateInput.value = formatDateStr(new Date());
+                }
+            }
+
+            renderAll();
+        }
+
+        function updateStats() {
+            const today = formatDateStr(new Date());
+            const backlogTasks = db.tasks.filter(t => t.nextDate < today);
+            document.getElementById('stat-backlog').textContent = backlogTasks.length;
+
+            let retention = 100;
+            if (db.tasks.length > 0) {
+                let totalRatings = 0;
+                let ratingCount = 0;
+                db.tasks.forEach(t => {
+                    if (t.history && t.history.length > 0) {
+                        t.history.forEach(h => { totalRatings += h.rating; ratingCount++; });
+                    }
+                });
+                const avgRatingBonus = ratingCount > 0 ? (totalRatings / ratingCount) * 5 : 75;
+                const overduePenalty = backlogTasks.length * 6;
+                retention = Math.min(100, Math.max(20, Math.round(avgRatingBonus - overduePenalty + 30)));
+            }
+            document.getElementById('stat-retention').textContent = `${retention}%`;
+        }
+
+        function renderHeatmap() {
+            const grid = document.getElementById('heatmap-grid');
+            if (!grid) return;
+
+            const today = new Date();
+            let html = '';
+
+            for (let i = -3; i <= 3; i++) {
+                const d = new Date(today);
+                d.setDate(today.getDate() + i);
+                const dStr = formatDateStr(d);
+                const monthDay = `${d.getMonth() + 1}/${d.getDate()}`;
+                
+                const tasksOnDay = db.tasks.filter(t => t.nextDate === dStr);
+                const count = tasksOnDay.length;
+
+                let dotsHtml = '';
+                const maxVisibleDots = 5;
+                const activeDotsCount = Math.min(count, maxVisibleDots);
+                
+                if (count > maxVisibleDots) {
+                    dotsHtml += `<div class="heatmap-overflow">+${count - maxVisibleDots}</div>`;
+                }
+
+                for (let j = 0; j < maxVisibleDots; j++) {
+                    const isActive = j < activeDotsCount ? 'active' : '';
+                    dotsHtml += `<div class="heatmap-dot ${isActive}"></div>`;
+                }
+
+                html += `
+                    <div class="heatmap-day-col">
+                        ${dotsHtml}
+                        <div class="heatmap-day-label">${monthDay}</div>
+                    </div>
+                `;
+            }
+            grid.innerHTML = html;
+        }
+
+        function createPreset() {
+            const nameInput = document.getElementById('preset-name');
+            const intervalsInput = document.getElementById('preset-intervals');
+            const name = nameInput.value.trim();
+            const rawIntervals = intervalsInput.value.trim();
+
+            if (!name || !rawIntervals) {
+                alert('名称と間隔の両方を入力してください');
+                return;
+            }
+
+            const intervals = rawIntervals.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n > 0);
+            if (intervals.length === 0) {
+                alert('有効な日数をカンマ区切りで入力してください（例: 1, 3, 7）');
+                return;
+            }
+
+            db.presets.push({
+                id: Date.now().toString(),
+                name: name,
+                intervals: intervals
+            });
+
+            saveData();
+            nameInput.value = '';
+            intervalsInput.value = '';
+            renderAll();
+            alert('新しいプリセットを追加しました！');
+        }
+
+        function deletePreset(id) {
+            if (db.presets.length <= 1) {
+                alert('最低1つはプリセットが必要です');
+                return;
+            }
+            if (confirm('このプリセットを削除しますか？')) {
+                db.presets = db.presets.filter(p => p.id !== id);
+                saveData();
+                renderAll();
+            }
+        }
+
+        function renderPresets() {
+            const select = document.getElementById('task-preset-select');
+            if (select) {
+                select.innerHTML = db.presets.map(p => `<option value="${p.id}">${escapeHtml(p.name)} (${p.intervals.join('日 → ')}日後)</option>`).join('');
+            }
+
+            const list = document.getElementById('preset-list');
+            if (list) {
+                list.innerHTML = db.presets.map(p => `
+                    <div class="preset-tag">
+                        <div>
+                            <strong>${escapeHtml(p.name)}</strong><br>
+                            <span style="font-size:0.75rem; color:var(--text-sub);">${p.intervals.join('日 → ')}日後</span>
+                        </div>
+                        <button class="delete-text" onclick="deletePreset('${p.id}')">削除</button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function createTask() {
+            const nameInput = document.getElementById('task-name');
+            const name = nameInput.value.trim();
+            if (!name) return alert('タスク名を入力してください');
+
+            const startDateInput = document.getElementById('task-start-date');
+            const startDate = startDateInput.value;
+            if (!startDate) return alert('開始日を選択してください');
+
+            const presetId = document.getElementById('task-preset-select').value;
+            const preset = db.presets.find(p => p.id === presetId);
+            if (!preset) return alert('プリセットを選択してください');
+
+            const firstNextDate = addDays(startDate, preset.intervals[0]);
+            const newTask = {
+                id: Date.now().toString(),
+                name: name,
+                intervals: preset.intervals,
+                currentStep: 1,
+                startDate: startDate,
+                nextDate: firstNextDate,
+                history: [],
+                isRatingMode: false
+            };
+
+            db.tasks.push(newTask);
+            saveData();
+            nameInput.value = '';
+            startDateInput.value = formatDateStr(new Date());
+            switchTab('today');
+        }
+
+        function openChartModal(id) {
+            const task = db.tasks.find(t => t.id === id);
+            if (!task) return;
+
+            document.getElementById('modal-task-name').textContent = task.name;
+            document.getElementById('modal-chart-content').innerHTML = renderForgettingCurveChart(task);
+            document.getElementById('chart-modal').classList.add('active');
+        }
+
+        function closeChartModal(event) {
+            if (!event || event.target.id === 'chart-modal' || event.target.classList.contains('modal-close-btn')) {
+                document.getElementById('chart-modal').classList.remove('active');
+            }
+        }
+
+        function promptRating(id) {
+            const task = db.tasks.find(t => t.id === id);
+            if (!task) return;
+            task.isRatingMode = true;
+            renderToday();
+        }
+
+        function completeWithRating(id, rating) {
+            const task = db.tasks.find(t => t.id === id);
+            if (!task) return;
+
+            const todayStr = formatDateStr(new Date());
+
+            if (!task.history) task.history = [];
+            task.history.push({
+                date: todayStr,
+                rating: rating,
+                step: task.currentStep
+            });
+
+            const multiplier = rating / 3;
+
+            task.currentStep++;
+            if (task.currentStep > task.intervals.length) {
+                db.tasks = db.tasks.filter(t => t.id !== id);
+                saveData();
+                renderAll();
+                alert('全サイクルの復習が完了しました！素晴らしいです！');
+            } else {
+                const baseInterval = task.intervals[task.currentStep - 1];
+                const adjustedInterval = Math.max(1, Math.round(baseInterval * multiplier));
+                task.startDate = todayStr;
+                task.nextDate = addDays(todayStr, adjustedInterval);
+
+                task.isRatingMode = false;
+                saveData();
+                renderAll();
+                
+                openChartModal(task.id);
+            }
+        }
+
+        function postponeTask(id) {
+            const task = db.tasks.find(t => t.id === id);
+            if (!task) return;
+            task.nextDate = addDays(task.nextDate, 1);
+            saveData();
+            renderAll();
+        }
+
+        function deleteTask(id) {
+            if (confirm('このタスクを削除しますか？')) {
+                db.tasks = db.tasks.filter(t => t.id !== id);
+                saveData();
+                renderAll();
+            }
+        }
+
+        function renderAll() {
+            updateStats();
+            renderHeatmap();
+            renderPresets();
+            renderToday();
+            renderCalendar();
+            renderList();
+        }
+
+        function renderForgettingCurveChart(task) {
+            const history = task.history || [];
+            
+            if (history.length === 0) {
+                return `<div class="empty-state">まだ復習履歴がありません。<br>完了して評価をつけると忘却曲線が表示されます。</div>`;
+            }
+
+            const width = 320;
+            const height = 150;
+            const padding = 24;
+            const graphWidth = width - padding * 2;
+            const graphHeight = height - padding * 2;
+
+            let curvePoints = [];
+            
+            history.forEach((h, index) => {
+                curvePoints.push({
+                    dateStr: h.date,
+                    val: h.rating,
+                    label: `★${h.rating} (回${h.step})`
+                });
+
+                const nextTargetDate = (index < history.length - 1) ? history[index + 1].date : task.nextDate;
+                const daysSpan = diffDays(h.date, nextTargetDate);
+                
+                if (daysSpan > 1) {
+                    const midDays = Math.floor(daysSpan / 2);
+                    const midDate = addDays(h.date, midDays);
+                    const decayVal = Math.max(0.8, h.rating * Math.pow(0.7, midDays / Math.max(daysSpan, 1)));
+                    
+                    curvePoints.push({
+                        dateStr: midDate,
+                        val: decayVal,
+                        label: ''
+                    });
+                }
+            });
+
+            const todayStr = formatDateStr(new Date());
+            const allDates = curvePoints.map(p => p.dateStr);
+            if (!allDates.includes(task.nextDate)) allDates.push(task.nextDate);
+            if (!allDates.includes(todayStr)) allDates.push(todayStr);
+            allDates.sort();
+
+            const minTime = new Date(allDates[0]).getTime();
+            const maxTime = new Date(allDates[allDates.length - 1]).getTime();
+            const timeRange = Math.max(1, maxTime - minTime);
+
+            const getX = (dateStr) => {
+                const t = new Date(dateStr).getTime();
+                return padding + ((t - minTime) / timeRange) * graphWidth;
+            };
+
+            const getY = (val) => {
+                const clamped = Math.max(0, Math.min(5, val));
+                return padding + graphHeight - (clamped / 5) * graphHeight;
+            };
+
+            const points = curvePoints.map(p => ({
+                x: getX(p.dateStr),
+                y: getY(p.val),
+                val: p.val,
+                label: p.label,
+                dateStr: p.dateStr
+            }));
+
+            let pathD = `M ${points[0].x} ${points[0].y}`;
+            for (let i = 0; i < points.length - 1; i++) {
+                const p0 = points[i];
+                const p1 = points[i + 1];
+                const cpX = (p0.x + p1.x) / 2;
+                pathD += ` C ${cpX} ${p0.y}, ${cpX} ${p1.y}, ${p1.x} ${p1.y}`;
+            }
+
+            const fillPathD = `${pathD} L ${points[points.length - 1].x} ${height - padding} L ${points[0].x} ${height - padding} Z`;
+
+            let dotsHtml = points.map(p => {
+                if (!p.label) return '';
+                return `
+                    <circle cx="${p.x}" cy="${p.y}" r="5" fill="var(--accent)" />
+                    <text x="${p.x}" y="${p.y - 10}" font-size="9" fill="var(--text-sub)" text-anchor="middle" font-weight="bold">${p.label}</text>
+                `;
+            }).join('');
+
+            const nextX = getX(task.nextDate);
+
+            return `
+                <div class="curve-chart-wrap" style="margin-bottom:0;">
+                    <div class="curve-chart-header">
+                        <span>忘却曲線シミュレーション (次回予定: ${task.nextDate})</span>
+                        <span>段階: ${task.currentStep}/${task.intervals.length}</span>
+                    </div>
+                    <svg viewBox="0 0 ${width} ${height}" style="width: 100%; height: auto; overflow: visible;">
+                        <line x1="${padding}" y1="${height - padding}" x2="${width - padding}" y2="${height - padding}" stroke="var(--danger)" stroke-dasharray="2,2" opacity="0.5" />
+                        <text x="${width - padding}" y="${height - padding - 4}" font-size="8" fill="var(--danger)" text-anchor="end">忘却限界 (0)</text>
+
+                        <line x1="${nextX}" y1="${padding}" x2="${nextX}" y2="${height - padding}" stroke="var(--accent)" stroke-dasharray="3,3" opacity="0.4" />
+
+                        <path d="${fillPathD}" fill="var(--accent)" opacity="0.08" />
+                        <path d="${pathD}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+
+                        ${dotsHtml}
+                    </svg>
+                    <div style="font-size: 0.7rem; color: var(--text-sub); margin-top: 8px; text-align: center;">
+                        ※時間が経過し次回予定日に近づくにつれて記憶が減衰します
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderToday() {
+            const container = document.getElementById('today-task-list');
+            const today = formatDateStr(new Date());
+            const targetTasks = db.tasks.filter(t => t.nextDate <= today);
+
+            if (targetTasks.length === 0) {
+                container.innerHTML = `<div class="empty-state">本日の復習タスクはありません。素晴らしい状態です。</div>`;
+                return;
+            }
+
+            container.innerHTML = targetTasks.map(task => {
+                const isOverdue = task.nextDate < today;
+                const badgeClass = isOverdue ? 'badge-overdue' : 'badge-today';
+                const badgeText = isOverdue ? `期限切れ (${task.nextDate})` : '今日予定';
+
+                let content = '';
+                if (task.isRatingMode) {
+                    content = `
+                        <div class="rating-box">
+                            <div class="rating-prompt">今日の定着度（5段階）を選んでください</div>
+                            <div class="rating-buttons">
+                                <button class="btn-rate" onclick="completeWithRating('${task.id}', 1)">1</button>
+                                <button class="btn-rate" onclick="completeWithRating('${task.id}', 2)">2</button>
+                                <button class="btn-rate" onclick="completeWithRating('${task.id}', 3)">3</button>
+                                <button class="btn-rate" onclick="completeWithRating('${task.id}', 4)">4</button>
+                                <button class="btn-rate" onclick="completeWithRating('${task.id}', 5)">5</button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    const lastRating = task.history && task.history.length > 0 ? task.history[task.history.length - 1].rating : '-';
+                    content = `
+                        <div class="task-meta">
+                            <span>段階: ${task.currentStep}回目 / 全${task.intervals.length}回</span>
+                            <span>直近評価: ★${lastRating}</span>
+                        </div>
+                        <div class="task-actions">
+                            <button class="btn btn-complete" onclick="promptRating('${task.id}')">完了</button>
+                            <button class="btn btn-postpone" onclick="postponeTask('${task.id}')">明日に回す</button>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="card">
+                        <span class="badge ${badgeClass}">${badgeText}</span>
+                        <div class="task-title" onclick="openChartModal('${task.id}')">${escapeHtml(task.name)} <span style="font-size:0.7rem; color:var(--text-sub);">📊 グラフ</span></div>
+                        ${content}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function changeMonth(diff) {
+            currentDate.setMonth(currentDate.getMonth() + diff);
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            document.getElementById('cal-month-title').textContent = `${year}年 ${month + 1}月`;
+
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            const lastDay = new Date(year, month + 1, 0).getDate();
+
+            const grid = document.getElementById('calendar-grid');
+            grid.innerHTML = `
+                <div class="cal-day-header">日</div><div class="cal-day-header">月</div>
+                <div class="cal-day-header">火</div><div class="cal-day-header">水</div>
+                <div class="cal-day-header">木</div><div class="cal-day-header">金</div>
+                <div class="cal-day-header">土</div>
+            `;
+
+            for (let i = 0; i < firstDayIndex; i++) {
+                grid.innerHTML += `<div class="cal-cell other-month"></div>`;
+            }
+
+            for (let day = 1; day <= lastDay; day++) {
+                const mStr = String(month + 1).padStart(2, '0');
+                const dStr = String(day).padStart(2, '0');
+                const dateStr = `${year}-${mStr}-${dStr}`;
+                const hasTask = db.tasks.some(t => t.nextDate === dateStr);
+                const isSelected = selectedDateStr === dateStr;
+
+                grid.innerHTML += `
+                    <div class="cal-cell ${hasTask ? 'has-task' : ''} ${isSelected ? 'selected' : ''}" onclick="selectDate('${dateStr}')">
+                        ${day}
+                    </div>
+                `;
+            }
+            renderCalendarDayTasks();
+        }
+
+        function selectDate(dateStr) {
+            selectedDateStr = dateStr;
+            renderCalendar();
+        }
+
+        function renderCalendarDayTasks() {
+            const title = document.getElementById('selected-date-title');
+            const container = document.getElementById('calendar-day-tasks');
+            title.textContent = `${selectedDateStr} の予定タスク`;
+
+            const tasks = db.tasks.filter(t => t.nextDate === selectedDateStr);
+            if (tasks.length === 0) {
+                container.innerHTML = `<div class="empty-state" style="padding: 16px 0;">この日に予定されているタスクはありません</div>`;
+                return;
+            }
+
+            container.innerHTML = tasks.map(task => `
+                <div style="padding: 8px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+                    <div style="cursor: pointer;" onclick="openChartModal('${task.id}')">
+                        <div style="font-weight: 600; font-size: 0.95rem;">${escapeHtml(task.name)} <span style="font-size:0.7rem; color:var(--text-sub);">📊</span></div>
+                        <div style="font-size: 0.75rem; color: var(--text-sub);">段階: ${task.currentStep}回目</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderList() {
+            const container = document.getElementById('all-task-list');
+            if (db.tasks.length === 0) {
+                container.innerHTML = `<div class="empty-state">登録されたタスクはありません。</div>`;
+                return;
+            }
+
+            container.innerHTML = db.tasks.map(task => `
+                <div class="card">
+                    <div class="task-title" onclick="openChartModal('${task.id}')">${escapeHtml(task.name)} <span style="font-size:0.7rem; color:var(--text-sub);">📊 グラフ</span></div>
+                    <div class="task-meta" style="margin-top: 8px;">
+                        <span>次回予定: ${task.nextDate} (${task.currentStep}/${task.intervals.length}回目)</span>
+                        <button class="delete-text" onclick="deleteTask('${task.id}')">削除</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/[&'`<>"]/g, m => ({ '&': '&amp;', "'": '&#x27;', '`': '&#x60;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]));
+        }
+    </script>
+</body>
+</html>
