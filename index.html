@@ -459,3 +459,438 @@
         </div>
     </div>
 
+    <!-- 新規作成画面 -->
+    <div id="view-add" class="view-section">
+        <div class="card">
+            <div class="form-group">
+                <label>タスク名</label>
+                <input type="text" id="task-name" placeholder="例：英単語 / 第3章の復習">
+            </div>
+            <div class="form-group">
+                <label>復習間隔プリセットを選択</label>
+                <select id="task-preset-select"></select>
+            </div>
+            <button class="btn btn-primary" onclick="createTask()">タスクを追加する</button>
+        </div>
+    </div>
+
+    <!-- プリセット管理画面 -->
+    <div id="view-presets" class="view-section">
+        <div class="card">
+            <h3 style="font-size: 0.95rem; margin-bottom: 12px;">新しい間隔プリセットを追加</h3>
+            <div class="form-group">
+                <label>プリセット名</label>
+                <input type="text" id="preset-name" placeholder="例：じっくりコース、暗記用など">
+            </div>
+            <div class="form-group">
+                <label>復習間隔（日数をカンマ区切りで入力）</label>
+                <input type="text" id="preset-intervals" placeholder="例: 1, 3, 7, 14, 30">
+            </div>
+            <button class="btn btn-primary" onclick="createPreset()">プリセットを保存</button>
+        </div>
+        <div class="card">
+            <h3 style="font-size: 0.95rem; margin-bottom: 12px;">登録済みのプリセット</h3>
+            <div id="preset-list"></div>
+        </div>
+    </div>
+
+    <!-- 全タスク管理画面 -->
+    <div id="view-list" class="view-section">
+        <div id="all-task-list"></div>
+    </div>
+
+    <script>
+        let db = JSON.parse(localStorage.getItem('recur_db')) || {
+            presets: [
+                { id: 'p1', name: 'スタンダード (1, 3, 7, 14, 30日)', intervals: [1, 3, 7, 14, 30] },
+                { id: 'p2', name: '短期集中 (1, 2, 4, 7日)', intervals: [1, 2, 4, 7] }
+            ],
+            tasks: []
+        };
+
+        let currentDate = new Date();
+        let selectedDateStr = formatDateStr(new Date());
+
+        function saveData() {
+            localStorage.setItem('recur_db', JSON.stringify(db));
+        }
+
+        function formatDateStr(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function addDays(dateStr, days) {
+            const [y, m, d] = dateStr.split('-').map(Number);
+            const date = new Date(y, m - 1, d);
+            date.setDate(date.getDate() + days);
+            return formatDateStr(date);
+        }
+
+        window.onload = function() {
+            const options = { weekday: 'short', month: 'short', day: 'numeric' };
+            document.getElementById('header-date').textContent = new Date().toLocaleDateString('en-US', options);
+            renderAll();
+        };
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+
+            const tabMap = { today: 0, calendar: 1, add: 2, presets: 3, list: 4 };
+            document.querySelectorAll('.tab-btn')[tabMap[tabName]].classList.add('active');
+            document.getElementById(`view-${tabName}`).classList.add('active');
+            renderAll();
+        }
+
+        function updateStats() {
+            const today = formatDateStr(new Date());
+            const backlogTasks = db.tasks.filter(t => t.nextDate < today);
+            document.getElementById('stat-backlog').textContent = backlogTasks.length;
+
+            let retention = 100;
+            if (db.tasks.length > 0) {
+                let totalRatings = 0;
+                let ratingCount = 0;
+                db.tasks.forEach(t => {
+                    if (t.ratings && t.ratings.length > 0) {
+                        t.ratings.forEach(r => { totalRatings += r; ratingCount++; });
+                    }
+                });
+                const avgRatingBonus = ratingCount > 0 ? (totalRatings / ratingCount) * 5 : 75;
+                const overduePenalty = backlogTasks.length * 6;
+                retention = Math.min(100, Math.max(20, Math.round(avgRatingBonus - overduePenalty + 30)));
+            }
+            document.getElementById('stat-retention').textContent = `${retention}%`;
+        }
+
+        function createPreset() {
+            const nameInput = document.getElementById('preset-name');
+            const intervalsInput = document.getElementById('preset-intervals');
+            const name = nameInput.value.trim();
+            const rawIntervals = intervalsInput.value.trim();
+
+            if (!name || !rawIntervals) {
+                alert('名称と間隔の両方を入力してください');
+                return;
+            }
+
+            const intervals = rawIntervals.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n > 0);
+            if (intervals.length === 0) {
+                alert('有効な日数をカンマ区切りで入力してください（例: 1, 3, 7）');
+                return;
+            }
+
+            db.presets.push({
+                id: Date.now().toString(),
+                name: name,
+                intervals: intervals
+            });
+
+            saveData();
+            nameInput.value = '';
+            intervalsInput.value = '';
+            renderAll();
+            alert('新しいプリセットを追加しました！');
+        }
+
+        function deletePreset(id) {
+            if (db.presets.length <= 1) {
+                alert('最低1つはプリセットが必要です');
+                return;
+            }
+            if (confirm('このプリセットを削除しますか？')) {
+                db.presets = db.presets.filter(p => p.id !== id);
+                saveData();
+                renderAll();
+            }
+        }
+
+        function renderPresets() {
+            const select = document.getElementById('task-preset-select');
+            if (select) {
+                select.innerHTML = db.presets.map(p => `<option value="${p.id}">${escapeHtml(p.name)} (${p.intervals.join('日 → ')}日後)</option>`).join('');
+            }
+
+            const list = document.getElementById('preset-list');
+            if (list) {
+                list.innerHTML = db.presets.map(p => `
+                    <div class="preset-tag">
+                        <div>
+                            <strong>${escapeHtml(p.name)}</strong><br>
+                            <span style="font-size:0.75rem; color:var(--text-sub);">${p.intervals.join('日 → ')}日後</span>
+                        </div>
+                        <button class="delete-text" onclick="deletePreset('${p.id}')">削除</button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function createTask() {
+            const nameInput = document.getElementById('task-name');
+            const name = nameInput.value.trim();
+            if (!name) return alert('タスク名を入力してください');
+
+            const presetId = document.getElementById('task-preset-select').value;
+            const preset = db.presets.find(p => p.id === presetId);
+            if (!preset) return alert('プリセットを選択してください');
+
+            const today = formatDateStr(new Date());
+            const newTask = {
+                id: Date.now().toString(),
+                name: name,
+                intervals: preset.intervals,
+                currentStep: 1,
+                nextDate: addDays(today, preset.intervals[0]),
+                ratings: [],
+                isRatingMode: false,
+                showChart: false // グラフ表示の開閉フラグ
+            };
+
+            db.tasks.push(newTask);
+            saveData();
+            nameInput.value = '';
+            switchTab('today');
+        }
+
+        // タスク名をタップしたときにグラフの表示/非表示を切り替える
+        function toggleChart(id) {
+            const task = db.tasks.find(t => t.id === id);
+            if (!task) return;
+            task.showChart = !task.showChart;
+            renderAll();
+        }
+
+        function promptRating(id) {
+            const task = db.tasks.find(t => t.id === id);
+            if (!task) return;
+            task.isRatingMode = true;
+            renderToday();
+        }
+
+        function completeWithRating(id, rating) {
+            const task = db.tasks.find(t => t.id === id);
+            if (!task) return;
+
+            if (!task.ratings) task.ratings = [];
+            task.ratings.push(rating);
+
+            const multiplier = rating / 3;
+
+            task.currentStep++;
+            if (task.currentStep > task.intervals.length) {
+                db.tasks = db.tasks.filter(t => t.id !== id);
+            } else {
+                const baseInterval = task.intervals[task.currentStep - 1];
+                const adjustedInterval = Math.max(1, Math.round(baseInterval * multiplier));
+                task.nextDate = addDays(formatDateStr(new Date()), adjustedInterval);
+                task.isRatingMode = false;
+                task.showChart = true; // 評価直後は定着度グラフを開いて確認できるようにする
+            }
+
+            saveData();
+            renderAll();
+        }
+
+        function postponeTask(id) {
+            const task = db.tasks.find(t => t.id === id);
+            if (!task) return;
+            task.nextDate = addDays(task.nextDate, 1);
+            saveData();
+            renderAll();
+        }
+
+        function deleteTask(id) {
+            if (confirm('このタスクを削除しますか？')) {
+                db.tasks = db.tasks.filter(t => t.id !== id);
+                saveData();
+                renderAll();
+            }
+        }
+
+        function renderAll() {
+            updateStats();
+            renderPresets();
+            renderToday();
+            renderCalendar();
+            renderList();
+        }
+
+        // グラフHTMLを生成するヘルパー関数
+        function renderRatingChart(task) {
+            if (!task.ratings || task.ratings.length === 0) {
+                return `<div class="chart-container"><div class="chart-title">定着度履歴 (まだ評価がありません)</div></div>`;
+            }
+
+            const barsHtml = task.ratings.map((r, index) => {
+                const heightPercent = (r / 5) * 100; // 5段階評価に応じた高さ
+                return `
+                    <div class="chart-bar-wrap">
+                        <div class="chart-bar" style="height: ${heightPercent}%;"></div>
+                        <div class="chart-bar-label">${r}</div>
+                    </div>
+                `;
+            }).join('');
+
+            return `
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <span>定着度の推移 (全${task.ratings.length}回)</span>
+                        <span>★平均: ${(task.ratings.reduce((a, b) => a + b, 0) / task.ratings.length).toFixed(1)}</span>
+                    </div>
+                    <div class="chart-bars">
+                        ${barsHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderToday() {
+            const container = document.getElementById('today-task-list');
+            const today = formatDateStr(new Date());
+            const targetTasks = db.tasks.filter(t => t.nextDate <= today);
+
+            if (targetTasks.length === 0) {
+                container.innerHTML = `<div class="empty-state">本日の復習タスクはありません。素晴らしい状態です。</div>`;
+                return;
+            }
+
+            container.innerHTML = targetTasks.map(task => {
+                const isOverdue = task.nextDate < today;
+                const badgeClass = isOverdue ? 'badge-overdue' : 'badge-today';
+                const badgeText = isOverdue ? `期限切れ (${task.nextDate})` : '今日予定';
+
+                let content = '';
+                if (task.isRatingMode) {
+                    content = `
+                        <div class="rating-box">
+                            <div class="rating-prompt">今日の定着度（5段階）を選んでください</div>
+                            <div class="rating-buttons">
+                                <button class="btn-rate" onclick="completeWithRating('${task.id}', 1)">1</button>
+                                <button class="btn-rate" onclick="completeWithRating('${task.id}', 2)">2</button>
+                                <button class="btn-rate" onclick="completeWithRating('${task.id}', 3)">3</button>
+                                <button class="btn-rate" onclick="completeWithRating('${task.id}', 4)">4</button>
+                                <button class="btn-rate" onclick="completeWithRating('${task.id}', 5)">5</button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    content = `
+                        <div class="task-meta">
+                            <span>段階: ${task.currentStep}回目 / 全${task.intervals.length}回</span>
+                            ${task.ratings && task.ratings.length > 0 ? `<span>直近: ★${task.ratings[task.ratings.length-1]}</span>` : ''}
+                        </div>
+                        <div class="task-actions">
+                            <button class="btn btn-complete" onclick="promptRating('${task.id}')">完了</button>
+                            <button class="btn btn-postpone" onclick="postponeTask('${task.id}')">明日に回す</button>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="card">
+                        <span class="badge ${badgeClass}">${badgeText}</span>
+                        <div class="task-title" onclick="toggleChart('${task.id}')">${escapeHtml(task.name)} <span style="font-size:0.7rem; color:var(--text-sub);">📊 グラフ</span></div>
+                        ${task.showChart ? renderRatingChart(task) : ''}
+                        ${content}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function changeMonth(diff) {
+            currentDate.setMonth(currentDate.getMonth() + diff);
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            document.getElementById('cal-month-title').textContent = `${year}年 ${month + 1}月`;
+
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            const lastDay = new Date(year, month + 1, 0).getDate();
+
+            const grid = document.getElementById('calendar-grid');
+            grid.innerHTML = `
+                <div class="cal-day-header">日</div><div class="cal-day-header">月</div>
+                <div class="cal-day-header">火</div><div class="cal-day-header">水</div>
+                <div class="cal-day-header">木</div><div class="cal-day-header">金</div>
+                <div class="cal-day-header">土</div>
+            `;
+
+            for (let i = 0; i < firstDayIndex; i++) {
+                grid.innerHTML += `<div class="cal-cell other-month"></div>`;
+            }
+
+            for (let day = 1; day <= lastDay; day++) {
+                const mStr = String(month + 1).padStart(2, '0');
+                const dStr = String(day).padStart(2, '0');
+                const dateStr = `${year}-${mStr}-${dStr}`;
+                const hasTask = db.tasks.some(t => t.nextDate === dateStr);
+                const isSelected = selectedDateStr === dateStr;
+
+                grid.innerHTML += `
+                    <div class="cal-cell ${hasTask ? 'has-task' : ''} ${isSelected ? 'selected' : ''}" onclick="selectDate('${dateStr}')">
+                        ${day}
+                    </div>
+                `;
+            }
+            renderCalendarDayTasks();
+        }
+
+        function selectDate(dateStr) {
+            selectedDateStr = dateStr;
+            renderCalendar();
+        }
+
+        function renderCalendarDayTasks() {
+            const title = document.getElementById('selected-date-title');
+            const container = document.getElementById('calendar-day-tasks');
+            title.textContent = `${selectedDateStr} の予定タスク`;
+
+            const tasks = db.tasks.filter(t => t.nextDate === selectedDateStr);
+            if (tasks.length === 0) {
+                container.innerHTML = `<div class="empty-state" style="padding: 16px 0;">この日に予定されているタスクはありません</div>`;
+                return;
+            }
+
+            container.innerHTML = tasks.map(task => `
+                <div style="padding: 8px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-weight: 600; font-size: 0.95rem;">${escapeHtml(task.name)}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-sub);">段階: ${task.currentStep}回目</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderList() {
+            const container = document.getElementById('all-task-list');
+            if (db.tasks.length === 0) {
+                container.innerHTML = `<div class="empty-state">登録されたタスクはありません。</div>`;
+                return;
+            }
+
+            container.innerHTML = db.tasks.map(task => `
+                <div class="card">
+                    <div class="task-title" onclick="toggleChart('${task.id}')">${escapeHtml(task.name)} <span style="font-size:0.7rem; color:var(--text-sub);">📊 グラフ</span></div>
+                    ${task.showChart ? renderRatingChart(task) : ''}
+                    <div class="task-meta" style="margin-top: 8px;">
+                        <span>次回予定: ${task.nextDate} (${task.currentStep}/${task.intervals.length}回目)</span>
+                        <button class="delete-text" onclick="deleteTask('${task.id}')">削除</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/[&'`<>"]/g, m => ({ '&': '&amp;', "'": '&#x27;', '`': '&#x60;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]));
+        }
+    </script>
+</body>
+</html>
+        
+
