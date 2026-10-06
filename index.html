@@ -16,8 +16,6 @@
             --accent-hover: #9c7553;
             --border: #e6dfd5;
             --shadow: rgba(62, 50, 38, 0.04);
-            --danger: #d9b8b8;
-            --success: #a3b19b;
         }
 
         * {
@@ -212,7 +210,6 @@
             border-color: var(--accent);
         }
 
-        /* ヒートマップ＆統計エリア */
         .dashboard-section {
             margin-top: 24px;
             padding-top: 16px;
@@ -247,7 +244,19 @@
         .error-msg {
             color: #b25353;
             font-size: 13px;
-            text-align: center;
+            background: #fdf0f0;
+            padding: 10px;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .success-msg {
+            color: #4b7c59;
+            font-size: 13px;
+            background: #f0fdf4;
+            padding: 10px;
+            border-radius: 8px;
+            display: none;
         }
     </style>
 </head>
@@ -266,6 +275,7 @@
         <div id="auth-screen">
             <p id="auth-title" style="font-size: 15px; font-weight: 600; margin-bottom: 4px;">ログインしてください</p>
             <div id="auth-error" class="error-msg"></div>
+            <div id="auth-success" class="success-msg"></div>
             <input type="email" id="auth-email" placeholder="メールアドレス">
             <input type="password" id="auth-password" placeholder="パスワード (6文字以上)">
             <button id="auth-submit-btn" onclick="handleAuthSubmit()">ログイン</button>
@@ -277,4 +287,269 @@
         <!-- アプリメイン画面 -->
         <div id="app-screen">
             <div class="task-form">
-                <input type="
+                <input type="text" id="task-name-input" placeholder="タスク・学習項目名を入力...">
+                <select id="task-interval-input">
+                    <option value="1">毎日 (1日おき)</option>
+                    <option value="3" selected>標準 (3日おき)</option>
+                    <option value="7">週間 (7日おき)</option>
+                    <option value="14">隔週 (14日おき)</option>
+                </select>
+                <button onclick="addNewTask()">タスクを追加</button>
+            </div>
+
+            <div class="task-list" id="task-list-container"></div>
+
+            <div class="dashboard-section">
+                <h3 style="font-size: 14px; color: var(--text-sub); margin-bottom: 8px;">直近7日間の学習負荷ヒートマップ</h3>
+                <div class="heatmap-grid" id="heatmap-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://fkhtkpazzykngvinkspj.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_d6aGwC_tcVFcb5lcvU5vGg_3IuaG2qc";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let currentUser = null;
+        let tasks = [];
+        let isSignUpMode = false;
+
+        window.onload = async function() {
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (session) {
+                    currentUser = session.user;
+                    showAppScreen();
+                    await loadUserData();
+                } else {
+                    showAuthScreen();
+                }
+
+                supabaseClient.auth.onAuthStateChange(async (event, session) => {
+                    if (session) {
+                        currentUser = session.user;
+                        showAppScreen();
+                        await loadUserData();
+                    } else {
+                        currentUser = null;
+                        showAuthScreen();
+                    }
+                });
+            } catch (err) {
+                console.error("初期化エラー:", err);
+            }
+        };
+
+        function showAuthScreen() {
+            document.getElementById('auth-screen').style.display = 'flex';
+            document.getElementById('app-screen').style.display = 'none';
+            document.getElementById('user-status').style.display = 'none';
+        }
+
+        function showAppScreen() {
+            document.getElementById('auth-screen').style.display = 'none';
+            document.getElementById('app-screen').style.display = 'block';
+            document.getElementById('user-status').style.display = 'flex';
+            document.getElementById('user-email-display').textContent = currentUser.email;
+        }
+
+        function toggleAuthMode() {
+            isSignUpMode = !isSignUpMode;
+            document.getElementById('auth-title').textContent = isSignUpMode ? '新規アカウント作成' : 'ログインしてください';
+            document.getElementById('auth-submit-btn').textContent = isSignUpMode ? '登録する' : 'ログイン';
+            document.getElementById('auth-toggle-text').textContent = isSignUpMode ? 'ログインへ戻る' : '新規登録へ';
+            clearMessages();
+        }
+
+        function clearMessages() {
+            const errEl = document.getElementById('auth-error');
+            const succEl = document.getElementById('auth-success');
+            errEl.style.display = 'none';
+            errEl.textContent = '';
+            succEl.style.display = 'none';
+            succEl.textContent = '';
+        }
+
+        function showError(msg) {
+            const errEl = document.getElementById('auth-error');
+            errEl.textContent = msg;
+            errEl.style.display = 'block';
+        }
+
+        function showSuccess(msg) {
+            const succEl = document.getElementById('auth-success');
+            succEl.textContent = msg;
+            succEl.style.display = 'block';
+        }
+
+        async function handleAuthSubmit() {
+            clearMessages();
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value;
+
+            if (!email || !password) {
+                showError('メールアドレスとパスワードを入力してください。');
+                return;
+            }
+
+            if (isSignUpMode) {
+                const { data, error } = await supabaseClient.auth.signUp({ email, password });
+                if (error) {
+                    showError('登録エラー: ' + error.message);
+                } else {
+                    if (data?.session) {
+                        showSuccess('登録が完了し、ログインしました！');
+                    } else {
+                        showSuccess('登録確認メールが送信されました。メール内のリンクを確認してください。');
+                    }
+                }
+            } else {
+                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+                if (error) {
+                    showError('ログイン失敗: メールアドレスまたはパスワードが正しくありません。');
+                }
+            }
+        }
+
+        async function handleLogout() {
+            await supabaseClient.auth.signOut();
+        }
+
+        async function loadUserData() {
+            if (!currentUser) return;
+            const { data, error } = await supabaseClient
+                .from('user_data')
+                .select('data')
+                .eq('id', currentUser.id)
+                .single();
+
+            if (data && data.data) {
+                tasks = data.data.tasks || [];
+            } else {
+                tasks = [];
+                await saveUserData();
+            }
+            renderApp();
+        }
+
+        async function saveUserData() {
+            if (!currentUser) return;
+            const payload = {
+                id: currentUser.id,
+                data: { tasks },
+                updated_at: new Date().toISOString()
+            };
+            await supabaseClient.from('user_data').upsert(payload);
+        }
+
+        async function addNewTask() {
+            const nameInput = document.getElementById('task-name-input');
+            const intervalInput = document.getElementById('task-interval-input');
+            const name = nameInput.value.trim();
+            if (!name) return;
+
+            const newTask = {
+                id: Date.now().toString(),
+                name: name,
+                interval: parseInt(intervalInput.value),
+                lastCompleted: new Date().toISOString(),
+                history: []
+            };
+
+            tasks.push(newTask);
+            nameInput.value = '';
+            await saveUserData();
+            renderApp();
+        }
+
+        async function completeTask(taskId, rating) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            task.lastCompleted = new Date().toISOString();
+            if (!task.history) task.history = [];
+            task.history.push({ date: task.lastCompleted, rating: rating });
+
+            await saveUserData();
+            renderApp();
+        }
+
+        async function deleteTask(taskId) {
+            tasks = tasks.filter(t => t.id !== taskId);
+            await saveUserData();
+            renderApp();
+        }
+
+        function renderApp() {
+            const container = document.getElementById('task-list-container');
+            container.innerHTML = '';
+
+            if (tasks.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: var(--text-sub); font-size: 14px; padding: 20px;">タスクがまだありません。上のフォームから追加してください。</p>';
+            }
+
+            tasks.forEach(task => {
+                const card = document.createElement('div');
+                card.className = 'task-card';
+
+                const lastDate = new Date(task.lastCompleted);
+                const nextDate = new Date(lastDate.getTime());
+                nextDate.setDate(lastDate.getDate() + task.interval);
+                
+                const today = new Date();
+                const diffTime = nextDate - today;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                let statusText = `次回期限: ${diffDays > 0 ? `あと ${diffDays} 日` : '今日 / 期限切れ'}`;
+
+                card.innerHTML = `
+                    <div class="task-header">
+                        <span class="task-title">${escapeHtml(task.name)}</span>
+                        <button class="secondary" style="padding: 4px 8px; font-size: 11px;" onclick="deleteTask('${task.id}')">削除</button>
+                    </div>
+                    <div class="task-meta">間隔: ${task.interval}日おき | ${statusText}</div>
+                    <div class="rating-buttons">
+                        <button class="rating-btn" onclick="completeTask('${task.id}', 1)">1 (忘れた)</button>
+                        <button class="rating-btn" onclick="completeTask('${task.id}', 3)">3 (普通)</button>
+                        <button class="rating-btn" onclick="completeTask('${task.id}', 5)">5 (完璧)</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            renderHeatmap();
+        }
+
+        function renderHeatmap() {
+            const heatmap = document.getElementById('heatmap-container');
+            heatmap.innerHTML = '';
+
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                const dateStr = d.toISOString().split('T')[0];
+
+                let count = 0;
+                tasks.forEach(task => {
+                    if (task.history) {
+                        count += task.history.filter(h => h.date.startsWith(dateStr)).length;
+                    }
+                });
+
+                const cell = document.createElement('div');
+                cell.className = `heatmap-cell ${count > 0 ? 'active' : ''}`;
+                cell.textContent = `${d.getDate()}`;
+                cell.title = `${dateStr}: ${count}回完了`;
+                heatmap.appendChild(cell);
+            }
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            );
+        }
+    </script>
+</body>
+</html>
