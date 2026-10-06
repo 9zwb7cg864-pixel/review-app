@@ -674,6 +674,7 @@
             <button class="tab-btn" onclick="switchTab('calendar')">カレンダー</button>
             <button class="tab-btn" onclick="switchTab('studylogs')">学習時間ログ</button>
             <button class="tab-btn" onclick="switchTab('list')">一覧</button>
+            <button class="tab-btn" onclick="switchTab('settings')">設定</button>
         </div>
 
         <!-- 今日の復習画面 -->
@@ -725,6 +726,43 @@
         <div id="view-list" class="view-section">
             <div id="all-task-list"></div>
         </div>
+
+        <!-- 設定画面 -->
+        <div id="view-settings" class="view-section">
+            <div class="card">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>定着率のセーフライン</label>
+                    <div style="font-size: 0.75rem; color: var(--text-sub); margin-bottom: 8px;">この数値以上なら、追加学習は不要と判断します。</div>
+                    <select id="settings-retention-threshold" onchange="updateRetentionThreshold()">
+                        <option value="60">60%</option>
+                        <option value="65">65%</option>
+                        <option value="70">70%</option>
+                        <option value="75">75%</option>
+                        <option value="80">80%</option>
+                        <option value="85">85%</option>
+                        <option value="90">90%</option>
+                        <option value="95">95%</option>
+                        <option value="100">100%</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="form-group">
+                    <label>復習間隔プリセットの追加・管理</label>
+                    <div style="font-size: 0.75rem; color: var(--text-sub); margin-bottom: 12px;">タスク作成時に選べる復習間隔（日数）のプリセットを管理できます。</div>
+                    <div id="settings-preset-list" style="margin-bottom: 16px;"></div>
+                    
+                    <div class="form-group" style="margin-bottom: 8px;">
+                        <input type="text" id="settings-new-preset-name" placeholder="プリセット名（例：長期じっくり型）">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <input type="text" id="settings-new-preset-intervals" placeholder="間隔（カンマ区切り例: 1, 3, 7, 14, 30）">
+                    </div>
+                    <button class="btn btn-primary" onclick="addNewPresetFromSettings()">新しいプリセットを追加</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- グラフ・詳細モーダル -->
@@ -765,21 +803,7 @@
             </div>
             <div class="form-group">
                 <label>復習間隔プリセットを選択</label>
-                <div style="display: flex; gap: 8px;">
-                    <select id="task-preset-select" onchange="handlePresetChange()" style="flex: 1;"></select>
-                    <button type="button" class="btn" style="width: auto; padding: 0 12px; background: #f2eee9; border: 1px solid var(--border); font-size: 0.8rem; color: var(--text-main);" onclick="deleteCurrentPreset()">削除</button>
-                </div>
-            </div>
-            
-            <div style="background: #faf8f5; border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 8px;">
-                <label style="margin-bottom: 8px;">カスタム / 新規間隔プリセットの追加</label>
-                <div class="form-group" style="margin-bottom: 8px;">
-                    <input type="text" id="inline-preset-name" placeholder="プリセット名（例：直前対策コース）" style="font-size:0.9rem; padding:8px;">
-                </div>
-                <div class="form-group" style="margin-bottom: 8px;">
-                    <input type="text" id="inline-preset-intervals" placeholder="日数をカンマ区切り (例: 1, 3, 7, 14)" style="font-size:0.9rem; padding:8px;">
-                </div>
-                <button class="btn" style="background:#ede8e1; color:var(--text-main); font-size:0.85rem; padding:8px;" onclick="createInlinePreset()">新しい間隔として登録</button>
+                <select id="task-preset-select"></select>
             </div>
         </div>
     </div>
@@ -814,7 +838,7 @@
 
     <script>
         let currentUser = localStorage.getItem('recur_current_user') || null;
-        let db = { presets: [], tasks: [], studyLogs: [] };
+        let db = { presets: [], tasks: [], studyLogs: [], settings: { retentionThreshold: 80 } };
 
         let currentDate = new Date();
         let selectedDateStr = formatDateStr(new Date());
@@ -824,8 +848,16 @@
             const data = localStorage.getItem(`recur_db_${currentUser}`);
             if (data) {
                 db = JSON.parse(data);
+                if (!db.presets || db.presets.length === 0) {
+                    db.presets = [
+                        { id: 'p1', name: 'スタンダード (1, 3, 7, 14, 30日)', intervals: [1, 3, 7, 14, 30] },
+                        { id: 'p2', name: '短期集中 (1, 2, 4, 7日)', intervals: [1, 2, 4, 7] }
+                    ];
+                }
                 if (!db.studyLogs) db.studyLogs = [];
                 db.studyLogs = db.studyLogs.filter(l => l.subject !== 'あ');
+                if (!db.settings) db.settings = { retentionThreshold: 80 };
+                if (db.settings.retentionThreshold === undefined) db.settings.retentionThreshold = 80;
             } else {
                 db = {
                     presets: [
@@ -833,7 +865,8 @@
                         { id: 'p2', name: '短期集中 (1, 2, 4, 7日)', intervals: [1, 2, 4, 7] }
                     ],
                     tasks: [],
-                    studyLogs: []
+                    studyLogs: [],
+                    settings: { retentionThreshold: 80 }
                 };
                 saveData();
             }
@@ -970,7 +1003,7 @@
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
 
-            const tabMap = { today: 0, calendar: 1, studylogs: 2, list: 3 };
+            const tabMap = { today: 0, calendar: 1, studylogs: 2, list: 3, settings: 4 };
             document.querySelectorAll('.tab-btn')[tabMap[tabName]].classList.add('active');
             document.getElementById(`view-${tabName}`).classList.add('active');
 
@@ -1039,73 +1072,107 @@
             grid.innerHTML = html;
         }
 
-        function createInlinePreset() {
-            const nameInput = document.getElementById('inline-preset-name');
-            const intervalsInput = document.getElementById('inline-preset-intervals');
-            const name = nameInput.value.trim();
-            const rawIntervals = intervalsInput.value.trim();
+        function renderSettings() {
+            const select = document.getElementById('settings-retention-threshold');
+            if (select) {
+                const threshold = db.settings?.retentionThreshold ?? 80;
+                select.value = threshold;
+            }
+            renderSettingsPresets();
+        }
 
-            if (!name || !rawIntervals) {
-                alert('プリセット名と間隔の両方を入力してください');
+        function renderSettingsPresets() {
+            const container = document.getElementById('settings-preset-list');
+            if (!container) return;
+
+            if (!db.presets || db.presets.length === 0) {
+                container.innerHTML = `<div style="font-size:0.8rem; color:var(--text-sub);">登録されたプリセットはありません。</div>`;
                 return;
             }
 
-            const intervals = rawIntervals.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n > 0);
+            container.innerHTML = db.presets.map(p => `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: #faf8f5; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px;">
+                    <div>
+                        <div style="font-weight: 600; font-size: 0.9rem;">${escapeHtml(p.name)}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-sub);">間隔: ${p.intervals.join('日 → ')}日後</div>
+                    </div>
+                    <button class="delete-text" onclick="deletePreset('${p.id}')">削除</button>
+                </div>
+            `).join('');
+        }
+
+        function addNewPresetFromSettings() {
+            const nameInput = document.getElementById('settings-new-preset-name');
+            const intervalsInput = document.getElementById('settings-new-preset-intervals');
+
+            const name = nameInput.value.trim();
+            const intervalsStr = intervalsInput.value.trim();
+
+            if (!name) {
+                alert('プリセット名を入力してください');
+                return;
+            }
+            if (!intervalsStr) {
+                alert('復習間隔（日数）をカンマ区切りで入力してください');
+                return;
+            }
+
+            const intervals = intervalsStr.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n) && n > 0);
             if (intervals.length === 0) {
-                alert('有効な日数をカンマ区切りで入力してください（例: 1, 3, 7）');
+                alert('有効な数値をカンマ区切りで入力してください（例: 1, 3, 7, 14, 30）');
                 return;
             }
 
             const newPreset = {
-                id: Date.now().toString(),
+                id: 'p_' + Date.now(),
                 name: name,
                 intervals: intervals
             };
 
+            if (!db.presets) db.presets = [];
             db.presets.push(newPreset);
             saveData();
-            
+
             nameInput.value = '';
             intervalsInput.value = '';
-            renderPresetSelect(newPreset.id);
-            alert('新しい間隔プリセットを追加しました！');
+            renderAll();
+            alert('新しいプリセットを追加しました！');
         }
 
-        function deleteCurrentPreset() {
-            const select = document.getElementById('task-preset-select');
-            const presetId = select.value;
-            if (presetId === 'custom_new') {
-                alert('削除するプリセットを選択してください');
-                return;
-            }
+        function deletePreset(id) {
             if (db.presets.length <= 1) {
-                alert('プリセットは最低1つ残す必要があります');
+                alert('少なくとも1つのプリセットを残す必要があります。');
                 return;
             }
-            const target = db.presets.find(p => p.id === presetId);
-            if (!target) return;
-
-            if (confirm(`プリセット「${target.name}」を削除しますか？`)) {
-                db.presets = db.presets.filter(p => p.id !== presetId);
+            if (confirm('このプリセットを削除しますか？')) {
+                db.presets = db.presets.filter(p => p.id !== id);
                 saveData();
-                renderPresetSelect();
+                renderAll();
             }
+        }
+
+        function updateRetentionThreshold() {
+            const select = document.getElementById('settings-retention-threshold');
+            if (!select) return;
+            if (!db.settings) db.settings = {};
+            db.settings.retentionThreshold = parseInt(select.value, 10);
+            saveData();
         }
 
         function renderPresetSelect(selectedId = null) {
             const select = document.getElementById('task-preset-select');
             if (!select) return;
 
+            if (!db.presets || db.presets.length === 0) {
+                db.presets = [
+                    { id: 'p1', name: 'スタンダード (1, 3, 7, 14, 30日)', intervals: [1, 3, 7, 14, 30] },
+                    { id: 'p2', name: '短期集中 (1, 2, 4, 7日)', intervals: [1, 2, 4, 7] }
+                ];
+            }
+
             select.innerHTML = db.presets.map(p => `
                 <option value="${p.id}" ${selectedId === p.id ? 'selected' : ''}>${escapeHtml(p.name)} (${p.intervals.join('日 → ')}日後)</option>
-            `).join('') + `<option value="custom_new">＋ 新しい間隔を直接追加する...</option>`;
-        }
-
-        function handlePresetChange() {
-            const select = document.getElementById('task-preset-select');
-            if (select.value === 'custom_new') {
-                document.getElementById('inline-preset-name').focus();
-            }
+            `).join('');
         }
 
         function openTaskModal() {
@@ -1138,7 +1205,6 @@
             if (!startDate) return alert('開始日を選択してください');
 
             const presetId = document.getElementById('task-preset-select').value;
-            if (presetId === 'custom_new') return alert('有効なプリセットを選択するか、新しいプリセットを追加してください');
             const preset = db.presets.find(p => p.id === presetId);
             if (!preset) return alert('有効なプリセットを選択してください');
 
@@ -1339,14 +1405,15 @@
             }
 
             task.currentEstimatedSec = nextSec;
+            let threshold = db.settings?.retentionThreshold ?? 80;
 
             if (task.isAdditionalMode) {
                 let dn = calculateCurrentRetention(task);
-                if (dn >= 80) {
+                if (dn >= threshold) {
                     db.tasks = db.tasks.filter(t => t.id !== id);
                     saveData();
                     renderAll();
-                    alert(`定着度が80%以上（${dn}%）に達したため、追加学習モードを終了しました！お疲れ様でした！`);
+                    alert(`定着度が${threshold}%以上（${dn}%）に達したため、追加学習モードを終了しました！お疲れ様でした！`);
                 } else {
                     task.nextDate = addDays(todayStr, 3);
                     task.isRatingMode = false;
@@ -1363,11 +1430,11 @@
             task.currentStep++;
             if (task.currentStep > task.intervals.length) {
                 let dn = calculateCurrentRetention(task);
-                if (dn >= 80) {
+                if (dn >= threshold) {
                     db.tasks = db.tasks.filter(t => t.id !== id);
                     saveData();
                     renderAll();
-                    alert(`全サイクルの復習が完了しました！現在の定着度は ${dn}%（80%以上）です。お疲れ様でした！`);
+                    alert(`全サイクルの復習が完了しました！現在の定着度は ${dn}%（${threshold}%以上）です。お疲れ様でした！`);
                 } else {
                     task.isWaitingAdditionalPrompt = true;
                     task.isRatingMode = false;
@@ -1497,6 +1564,7 @@
             renderCalendar();
             renderStudyLogs();
             renderList();
+            renderSettings();
         }
 
         function renderToday() {
@@ -1509,6 +1577,8 @@
                 return;
             }
 
+            const threshold = db.settings?.retentionThreshold ?? 80;
+
             container.innerHTML = targetTasks.map(task => {
                 if (task.isWaitingAdditionalPrompt) {
                     return `
@@ -1516,7 +1586,7 @@
                             <span class="badge badge-additional">通常復習完了</span>
                             <div class="task-title" onclick="openChartModal('${task.id}')">${escapeHtml(task.name)} <span style="font-size:0.7rem; color:var(--text-sub);">📊 詳細</span></div>
                             <div style="font-size:0.85rem; margin: 12px 0; color:var(--text-main); line-height:1.5;">
-                                通常の復習が完了しました。現在の定着度は80%未満です。追加学習を行いますか？
+                                通常の復習が完了しました。現在の定着度は${threshold}%未満です。追加学習を行いますか？
                             </div>
                             <div class="task-actions">
                                 <button class="btn btn-complete" onclick="chooseAdditionalStudy('${task.id}', true)">追加学習する</button>
