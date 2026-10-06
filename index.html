@@ -338,6 +338,22 @@
             border-color: var(--accent);
         }
 
+        .btn-back {
+            background: #f2eee9;
+            color: var(--text-main);
+            width: 100%;
+            padding: 8px 0;
+            margin-top: 8px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-back:hover {
+            background: #e6e2db;
+        }
+
         /* モーダルウィンドウ */
         .modal-overlay {
             display: none;
@@ -976,6 +992,14 @@
             renderToday();
         }
 
+        // 定着度選択をキャンセルして元の状態に戻す関数
+        function cancelRating(id) {
+            const task = db.tasks.find(t => t.id === id);
+            if (!task) return;
+            task.isRatingMode = false;
+            renderToday();
+        }
+
         function completeWithRating(id, rating) {
             const task = db.tasks.find(t => t.id === id);
             if (!task) return;
@@ -1011,7 +1035,6 @@
             }
         }
 
-        // ここに確認ダイアログ（confirm）を追加しました
         function postponeTask(id) {
             const task = db.tasks.find(t => t.id === id);
             if (!task) return;
@@ -1177,6 +1200,7 @@
                                 <button class="btn-rate" onclick="completeWithRating('${task.id}', 4)">4</button>
                                 <button class="btn-rate" onclick="completeWithRating('${task.id}', 5)">5</button>
                             </div>
+                            <button class="btn-back" onclick="cancelRating('${task.id}')">戻る</button>
                         </div>
                     `;
                 } else {
