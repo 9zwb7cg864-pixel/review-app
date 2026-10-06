@@ -738,7 +738,7 @@
         </div>
     </div>
 
-    <!-- タスク新規作成モーダル（間隔設定内蔵・追加ボタン最上部配置） -->
+    <!-- タスク新規作成モーダル -->
     <div class="modal-overlay" id="task-modal" onclick="closeTaskModal(event)">
         <div class="modal-card" onclick="event.stopPropagation()">
             <div class="modal-header">
@@ -746,7 +746,6 @@
                 <button class="modal-close-btn" onclick="closeTaskModal()">✕</button>
             </div>
             
-            <!-- 「タスクを追加する」ボタンを1番上に配置 -->
             <button class="btn btn-primary" style="margin-bottom: 16px;" onclick="createTask()">タスクを追加する</button>
 
             <div class="form-group">
@@ -769,7 +768,6 @@
                 <select id="task-preset-select" onchange="handlePresetChange()"></select>
             </div>
             
-            <!-- 間隔設定の内蔵セクション -->
             <div style="background: #faf8f5; border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 8px;">
                 <label style="margin-bottom: 8px;">カスタム / 新規間隔プリセットの追加</label>
                 <div class="form-group" style="margin-bottom: 8px;">
@@ -783,7 +781,7 @@
         </div>
     </div>
 
-    <!-- 学習時間追加モーダル（独立した教科選択・入力対応） -->
+    <!-- 学習時間追加モーダル -->
     <div class="modal-overlay" id="study-modal" onclick="closeStudyModal(event)">
         <div class="modal-card" onclick="event.stopPropagation()">
             <div class="modal-header">
@@ -888,6 +886,19 @@
             const date1 = new Date(y1, m1 - 1, d1);
             const date2 = new Date(y2, m2 - 1, d2);
             return Math.round((date2 - date1) / (1000 * 60 * 60 * 24));
+        }
+
+        // --- 共通判定関数を追加 ---
+        function isTaskActiveOnDate(t, dateStr) {
+            if (!t) return false;
+            if (t.nextDate === dateStr) return true;
+            if (t.allSchedules && t.allSchedules.includes(dateStr)) {
+                if (t.nextDate && t.nextDate > dateStr) {
+                    return false;
+                }
+                return true;
+            }
+            return false;
         }
 
         function getScoreFromRating(rating) {
@@ -1000,7 +1011,7 @@
                 const dStr = formatDateStr(d);
                 const monthDay = `${d.getMonth() + 1}/${d.getDate()}`;
                 
-                const tasksOnDay = db.tasks.filter(t => t.allSchedules && t.allSchedules.includes(dStr));
+                const tasksOnDay = db.tasks.filter(t => isTaskActiveOnDate(t, dStr));
                 const count = tasksOnDay.length;
 
                 let dotsHtml = '';
@@ -1168,7 +1179,6 @@
 
             const currentRetention = points.length > 0 ? points[points.length - 1].retention : 0;
 
-            // SVGグラフの座標計算
             const svgWidth = 320;
             const svgHeight = 140;
             const paddingX = 35;
@@ -1209,16 +1219,13 @@
                 <div style="background:#faf8f5; border:1px solid var(--border); border-radius:12px; padding:12px; text-align:center;">
                     <div style="font-size:0.75rem; font-weight:600; color:var(--text-sub); margin-bottom:8px;">忘却曲線モデルに基づく定着度 (Dn) 推移</div>
                     <svg width="100%" viewBox="0 0 ${svgWidth} ${svgHeight}" style="overflow:visible;">
-                        <!-- グリッド線 -->
                         <line x1="${paddingX}" y1="${paddingY}" x2="${svgWidth - paddingX}" y2="${paddingY}" stroke="var(--border)" stroke-dasharray="2,2" />
                         <line x1="${paddingX}" y1="${paddingY + graphHeight/2}" x2="${svgWidth - paddingX}" y2="${paddingY + graphHeight/2}" stroke="var(--border)" stroke-dasharray="2,2" />
                         <line x1="${paddingX}" y1="${svgHeight - paddingY}" x2="${svgWidth - paddingX}" y2="${svgHeight - paddingY}" stroke="var(--border)" />
                         
-                        <!-- 軸ラベル -->
                         <text x="${paddingX - 6}" y="${paddingY + 4}" font-size="8.5" text-anchor="end" fill="var(--text-sub)">100%</text>
                         <text x="${paddingX - 6}" y="${svgHeight - paddingY + 4}" font-size="8.5" text-anchor="end" fill="var(--text-sub)">0%</text>
 
-                        <!-- 曲線プロット -->
                         ${points.length > 1 ? `<path d="${pathData}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" />` : ''}
                         ${circlesHtml}
                     </svg>
@@ -1360,6 +1367,9 @@
             
             if (confirm(`「${task.name}」の次回予定日を明日に延期しますか？`)) {
                 task.nextDate = addDays(task.nextDate, 1);
+                if (task.allSchedules && task.allSchedules.length > 0) {
+                    task.allSchedules = task.allSchedules.map(dateStr => addDays(dateStr, 1));
+                }
                 task.isPostponed = true;
                 saveData();
                 renderAll();
@@ -1374,7 +1384,6 @@
             }
         }
 
-        // 学習時間ログ追加モーダル
         function openStudyLogModal() {
             document.getElementById('study-date').value = formatDateStr(new Date());
             const select = document.getElementById('study-subject-select');
@@ -1634,7 +1643,9 @@
                 const mStr = String(month + 1).padStart(2, '0');
                 const dStr = String(day).padStart(2, '0');
                 const dateStr = `${year}-${mStr}-${dStr}`;
-                const hasTask = db.tasks.some(t => (t.allSchedules && t.allSchedules.includes(dateStr)) || t.nextDate === dateStr);
+                
+                // --- 修正箇所: 共通関数でドット表示を判定 ---
+                const hasTask = db.tasks.some(t => isTaskActiveOnDate(t, dateStr));
                 const isSelected = selectedDateStr === dateStr;
 
                 grid.innerHTML += `
@@ -1656,7 +1667,9 @@
             const container = document.getElementById('calendar-day-tasks');
             title.textContent = `${selectedDateStr} の予定タスク`;
 
-            const tasks = db.tasks.filter(t => t.nextDate === selectedDateStr || (t.allSchedules && t.allSchedules.includes(selectedDateStr) && t.nextDate === selectedDateStr));
+            // --- 修正箇所: 共通関数で日付タップ時のタスクを絞り込み ---
+            const tasks = db.tasks.filter(t => isTaskActiveOnDate(t, selectedDateStr));
+            
             if (tasks.length === 0) {
                 container.innerHTML = `<div class="empty-state" style="padding: 16px 0;">この日に予定されているタスクはありません</div>`;
                 return;
