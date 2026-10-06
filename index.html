@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EBBING - Review Manager</title>
+    <title>RECUR - Review Manager</title>
     <style>
         :root {
-            --bg-color: #f4f3ef;
+            --bg-color: #f7f5f0;
             --card-bg: #ffffff;
-            --text-main: #1c1c1e;
-            --text-sub: #8e8e93;
-            --border: #e5e5ea;
-            --accent: #2c2c2e;
-            --accent-hover: #3a3a3c;
-            --danger: #ff3b30;
-            --success: #34c759;
+            --text-main: #2b2621;
+            --text-sub: #8c8279;
+            --border: #e6e2db;
+            --accent: #5c4b41;
+            --accent-hover: #4a3c34;
+            --danger: #c85a53;
+            --success: #5a8a62;
         }
 
         * {
@@ -44,10 +44,10 @@
         }
 
         .brand {
-            font-size: 0.85rem;
-            letter-spacing: 2px;
+            font-size: 0.9rem;
+            letter-spacing: 3px;
             font-weight: 700;
-            color: var(--text-sub);
+            color: var(--accent);
         }
 
         .date-display {
@@ -56,12 +56,42 @@
             font-weight: 500;
         }
 
+        /* 統計サマリーパネル */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 16px;
+            border: 1px solid rgba(0,0,0,0.02);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+            color: var(--text-sub);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
         /* ナビゲーションタブ */
         .nav-tabs {
             display: flex;
             gap: 6px;
             margin-bottom: 24px;
-            background: #e9e8e4;
+            background: #ede8e1;
             padding: 4px;
             border-radius: 12px;
         }
@@ -71,7 +101,7 @@
             padding: 8px;
             border: none;
             background: transparent;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 600;
             color: var(--text-sub);
             border-radius: 8px;
@@ -82,7 +112,7 @@
         .tab-btn.active {
             background: var(--card-bg);
             color: var(--text-main);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
         }
 
         .view-section {
@@ -103,7 +133,7 @@
             border: 1px solid rgba(0,0,0,0.02);
         }
 
-        /* ぷにゅっとするアニメーションボタン */
+        /* アニメーションボタン */
         .btn {
             width: 100%;
             padding: 12px;
@@ -141,9 +171,98 @@
         }
 
         .btn-postpone {
-            background-color: #f2f2f7;
+            background-color: #f2eee9;
             color: var(--text-main);
             flex: 1;
+            border: 1px solid var(--border);
+        }
+
+        /* 5段階評価パネル */
+        .rating-box {
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .rating-prompt {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-sub);
+            margin-bottom: 8px;
+        }
+
+        .rating-buttons {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-rate {
+            flex: 1;
+            padding: 8px 0;
+            background: #faf8f5;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.1s ease;
+        }
+
+        .btn-rate:hover {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        /* グラフ（定着度の視覚化）エリア */
+        .chart-container {
+            margin-top: 12px;
+            padding: 12px;
+            background: #faf8f5;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+
+        .chart-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-sub);
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .chart-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            height: 60px;
+            padding-top: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .chart-bar-wrap {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+            justify-content: flex-end;
+        }
+
+        .chart-bar {
+            width: 100%;
+            background: var(--accent);
+            border-radius: 4px 4px 0 0;
+            transition: height 0.3s ease;
+        }
+
+        .chart-bar-label {
+            font-size: 0.65rem;
+            color: var(--text-sub);
+            margin-top: 4px;
         }
 
         /* フォーム要素 */
@@ -166,7 +285,7 @@
             border: 1px solid var(--border);
             border-radius: 10px;
             font-size: 1rem;
-            background: #faf9f6;
+            background: #faf8f5;
             color: var(--text-main);
             outline: none;
         }
@@ -175,17 +294,15 @@
             border-color: var(--accent);
         }
 
-        .preset-preview {
-            font-size: 0.85rem;
-            color: var(--text-sub);
-            margin-top: 6px;
-        }
-
-        /* タスクカード */
+        /* タスクカード情報 */
         .task-title {
             font-size: 1.1rem;
             font-weight: 700;
             margin-bottom: 6px;
+            cursor: pointer;
+        }
+        .task-title:hover {
+            color: var(--accent);
         }
 
         .task-meta {
@@ -203,14 +320,13 @@
             display: inline-block;
             margin-bottom: 8px;
         }
-        .badge-today { background: #e8f5e9; color: #2e7d32; }
-        .badge-overdue { background: #ffebee; color: #c62828; }
-        .badge-future { background: #f1f1f3; color: #555; }
+        .badge-today { background: #edf4ee; color: var(--success); }
+        .badge-overdue { background: #fdf2f1; color: var(--danger); }
 
         .empty-state {
             text-align: center;
             color: var(--text-sub);
-            padding: 40px 0;
+            padding: 30px 0;
             font-size: 0.9rem;
         }
 
@@ -228,6 +344,7 @@
             border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
+            color: var(--text-main);
         }
         .calendar-grid {
             display: grid;
@@ -250,7 +367,7 @@
             border-radius: 8px;
             font-size: 0.85rem;
             cursor: pointer;
-            background: #faf9f6;
+            background: #faf8f5;
             border: 1px solid transparent;
             position: relative;
         }
@@ -266,9 +383,10 @@
         .cal-cell.selected {
             border-color: var(--accent);
             font-weight: bold;
+            background: #f2eee9;
         }
         .cal-cell.other-month {
-            color: #ccc;
+            color: #d1cbc3;
         }
 
         .delete-text {
@@ -279,24 +397,49 @@
             cursor: pointer;
             padding: 4px 0;
         }
+
+        .preset-tag {
+            display: inline-flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #faf8f5;
+            border: 1px solid var(--border);
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            font-size: 0.85rem;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="brand">EBBING</div>
+        <div class="brand">RECUR</div>
         <div class="date-display" id="header-date"></div>
     </header>
 
     <div class="nav-tabs">
-        <button class="tab-btn active" onclick="switchTab('today')">今日の復習</button>
+        <button class="tab-btn active" onclick="switchTab('today')">今日</button>
         <button class="tab-btn" onclick="switchTab('calendar')">カレンダー</button>
         <button class="tab-btn" onclick="switchTab('add')">新規作成</button>
-        <button class="tab-btn" onclick="switchTab('list')">全タスク</button>
+        <button class="tab-btn" onclick="switchTab('presets')">間隔設定</button>
+        <button class="tab-btn" onclick="switchTab('list')">一覧</button>
     </div>
 
     <!-- 今日の復習画面 -->
     <div id="view-today" class="view-section active">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">RETENTION</div>
+                <div class="stat-value" id="stat-retention">100%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">BACKLOG</div>
+                <div class="stat-value" id="stat-backlog">0</div>
+            </div>
+        </div>
+
         <div id="today-task-list"></div>
     </div>
 
@@ -304,9 +447,9 @@
     <div id="view-calendar" class="view-section">
         <div class="card">
             <div class="calendar-nav">
-                <button onclick="changeMonth(-1)">&lt;</button>
+                <button class="btn" style="width:auto;" onclick="changeMonth(-1)">&lt;</button>
                 <span id="cal-month-title" style="font-weight: 600;"></span>
-                <button onclick="changeMonth(1)">&gt;</button>
+                <button class="btn" style="width:auto;" onclick="changeMonth(1)">&gt;</button>
             </div>
             <div class="calendar-grid" id="calendar-grid"></div>
         </div>
@@ -316,264 +459,3 @@
         </div>
     </div>
 
-    <!-- 新規作成画面 -->
-    <div id="view-add" class="view-section">
-        <div class="card">
-            <div class="form-group">
-                <label>タスク名</label>
-                <input type="text" id="task-name" placeholder="例：英単語 1-50">
-            </div>
-            <div class="form-group">
-                <label>復習間隔プリセット</label>
-                <select id="preset-select" onchange="updatePresetPreview()">
-                    <option value="standard">スタンダード (1, 3, 7, 14, 30日)</option>
-                    <option value="short">短期集中 (1, 2, 4, 7日)</option>
-                    <option value="long">じっくり (3, 7, 14, 30, 60日)</option>
-                </select>
-                <div class="preset-preview" id="preset-preview"></div>
-            </div>
-            <button class="btn btn-primary" onclick="createTask()">タスクを追加する</button>
-        </div>
-    </div>
-
-    <!-- 全タスク管理画面 -->
-    <div id="view-list" class="view-section">
-        <div id="all-task-list"></div>
-    </div>
-
-    <script>
-        // プリセットの定義
-        const presets = {
-            standard: [1, 3, 7, 14, 30],
-            short: [1, 2, 4, 7],
-            long: [3, 7, 14, 30, 60]
-        };
-
-        let db = JSON.parse(localStorage.getItem('ebbing_db')) || { tasks: [], history: [] };
-        let currentDate = new Date();
-        let selectedDateStr = formatDateStr(new Date());
-
-        function saveData() {
-            localStorage.setItem('ebbing_db', JSON.stringify(db));
-        }
-
-        function formatDateStr(date) {
-            const y = date.getFullYear();
-            const m = String(date.getMonth() + 1).padStart(2, '0');
-            const d = String(date.getDate()).padStart(2, '0');
-            return `${y}-${m}-${d}`;
-        }
-
-        function addDays(dateStr, days) {
-            const [y, m, d] = dateStr.split('-').map(Number);
-            const date = new Date(y, m - 1, d);
-            date.setDate(date.getDate() + days);
-            return formatDateStr(date);
-        }
-
-        window.onload = function() {
-            const options = { weekday: 'short', month: 'short', day: 'numeric' };
-            document.getElementById('header-date').textContent = new Date().toLocaleDateString('en-US', options);
-            updatePresetPreview();
-            renderAll();
-        };
-
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
-
-            const index = { today: 0, calendar: 1, add: 2, list: 3 }[tabName];
-            document.querySelectorAll('.tab-btn')[index].classList.add('active');
-            document.getElementById(`view-${tabName}`).classList.add('active');
-            renderAll();
-        }
-
-        function updatePresetPreview() {
-            const val = document.getElementById('preset-select').value;
-            const intervals = presets[val];
-            document.getElementById('preset-preview').textContent = `スケジュール: ${intervals.join('日 → ')}日後`;
-        }
-
-        function createTask() {
-            const nameInput = document.getElementById('task-name');
-            const name = nameInput.value.trim();
-            if (!name) return alert('タスク名を入力してください');
-
-            const presetKey = document.getElementById('preset-select').value;
-            const intervals = presets[presetKey];
-            const today = formatDateStr(new Date());
-
-            const newTask = {
-                id: Date.now().toString(),
-                name: name,
-                intervals: intervals,
-                currentStep: 1,
-                nextDate: addDays(today, intervals[0])
-            };
-
-            db.tasks.push(newTask);
-            saveData();
-            nameInput.value = '';
-            switchTab('today');
-        }
-
-        function completeTask(id) {
-            const task = db.tasks.find(t => t.id === id);
-            if (!task) return;
-
-            task.currentStep++;
-            if (task.currentStep > task.intervals.length) {
-                db.tasks = db.tasks.filter(t => t.id !== id);
-            } else {
-                const interval = task.intervals[task.currentStep - 1];
-                task.nextDate = addDays(formatDateStr(new Date()), interval);
-            }
-            saveData();
-            renderAll();
-        }
-
-        function postponeTask(id) {
-            const task = db.tasks.find(t => t.id === id);
-            if (!task) return;
-            task.nextDate = addDays(task.nextDate, 1);
-            saveData();
-            renderAll();
-        }
-
-        function deleteTask(id) {
-            if (confirm('このタスクを削除しますか？')) {
-                db.tasks = db.tasks.filter(t => t.id !== id);
-                saveData();
-                renderAll();
-            }
-        }
-
-        function renderAll() {
-            renderToday();
-            renderCalendar();
-            renderList();
-        }
-
-        function renderToday() {
-            const container = document.getElementById('today-task-list');
-            const today = formatDateStr(new Date());
-            const targetTasks = db.tasks.filter(t => t.nextDate <= today);
-
-            if (targetTasks.length === 0) {
-                container.innerHTML = `<div class="empty-state">本日の復習タスクはありません。素晴らしい状態です。</div>`;
-                return;
-            }
-
-            container.innerHTML = targetTasks.map(task => {
-                const isOverdue = task.nextDate < today;
-                const badgeClass = isOverdue ? 'badge-overdue' : 'badge-today';
-                const badgeText = isOverdue ? `期限切れ (${task.nextDate})` : '今日予定';
-
-                return `
-                    <div class="card">
-                        <span class="badge ${badgeClass}">${badgeText}</span>
-                        <div class="task-title">${escapeHtml(task.name)}</div>
-                        <div class="task-meta">
-                            <span>段階: ${task.currentStep}回目 / 全${task.intervals.length}回</span>
-                        </div>
-                        <div class="task-actions">
-                            <button class="btn btn-complete" onclick="completeTask('${task.id}')">完了</button>
-                            <button class="btn btn-postpone" onclick="postponeTask('${task.id}')">明日に回す</button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        // カレンダー関連ロジック
-        function changeMonth(diff) {
-            currentDate.setMonth(currentDate.getMonth() + diff);
-            renderCalendar();
-        }
-
-        function renderCalendar() {
-            const year = currentDate.getFullYear();
-            const month = currentDate.getMonth();
-            document.getElementById('cal-month-title').textContent = `${year}年 ${month + 1}月`;
-
-            const firstDayIndex = new Date(year, month, 1).getDay();
-            const lastDay = new Date(year, month + 1, 0).getDate();
-
-            const grid = document.getElementById('calendar-grid');
-            grid.innerHTML = `
-                <div class="cal-day-header">日</div><div class="cal-day-header">月</div>
-                <div class="cal-day-header">火</div><div class="cal-day-header">水</div>
-                <div class="cal-day-header">木</div><div class="cal-day-header">金</div>
-                <div class="cal-day-header">土</div>
-            `;
-
-            for (let i = 0; i < firstDayIndex; i++) {
-                grid.innerHTML += `<div class="cal-cell other-month"></div>`;
-            }
-
-            for (let day = 1; day <= lastDay; day++) {
-                const mStr = String(month + 1).padStart(2, '0');
-                const dStr = String(day).padStart(2, '0');
-                const dateStr = `${year}-${mStr}-${dStr}`;
-                const hasTask = db.tasks.some(t => t.nextDate === dateStr);
-                const isSelected = selectedDateStr === dateStr;
-
-                grid.innerHTML += `
-                    <div class="cal-cell ${hasTask ? 'has-task' : ''} ${isSelected ? 'selected' : ''}" onclick="selectDate('${dateStr}')">
-                        ${day}
-                    </div>
-                `;
-            }
-            renderCalendarDayTasks();
-        }
-
-        function selectDate(dateStr) {
-            selectedDateStr = dateStr;
-            renderCalendar();
-        }
-
-        function renderCalendarDayTasks() {
-            const title = document.getElementById('selected-date-title');
-            const container = document.getElementById('calendar-day-tasks');
-            title.textContent = `${selectedDateStr} の予定タスク`;
-
-            const tasks = db.tasks.filter(t => t.nextDate === selectedDateStr);
-            if (tasks.length === 0) {
-                container.innerHTML = `<div class="empty-state" style="padding: 20px 0;">この日に予定されているタスクはありません</div>`;
-                return;
-            }
-
-            container.innerHTML = tasks.map(task => `
-                <div style="padding: 10px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <div style="font-weight: 600; font-size: 0.95rem;">${escapeHtml(task.name)}</div>
-                        <div style="font-size: 0.75rem; color: var(--text-sub);">段階: ${task.currentStep}回目</div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function renderList() {
-            const container = document.getElementById('all-task-list');
-            if (db.tasks.length === 0) {
-                container.innerHTML = `<div class="empty-state">登録されたタスクはありません。</div>`;
-                return;
-            }
-
-            container.innerHTML = db.tasks.map(task => `
-                <div class="card">
-                    <div class="task-title">${escapeHtml(task.name)}</div>
-                    <div class="task-meta">
-                        <span>次回予定: ${task.nextDate} (${task.currentStep}/${task.intervals.length}回目)</span>
-                        <button class="delete-text" onclick="deleteTask('${task.id}')">削除</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function escapeHtml(str) {
-            return str.replace(/[&'`<>"]/g, m => ({ '&': '&amp;', "'": '&#x27;', '`': '&#x60;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]));
-        }
-    </script>
-</body>
-</html>
