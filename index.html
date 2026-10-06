@@ -56,7 +56,7 @@
             font-weight: 500;
         }
 
-        /* 直近数日のタスク量ヒートマップ（丸の積み上げ） */
+        /* 直近数日のタスク量ヒートマップ（丸の積み上げ 6個以上対応） */
         .heatmap-card {
             background: var(--card-bg);
             border-radius: 16px;
@@ -79,7 +79,7 @@
             justify-content: space-between;
             align-items: flex-end;
             gap: 4px;
-            height: 70px;
+            height: 80px;
             padding-bottom: 4px;
             border-bottom: 1px solid var(--border);
         }
@@ -91,19 +91,28 @@
             align-items: center;
             height: 100%;
             justify-content: flex-end;
-            gap: 3px;
+            gap: 2px;
+            position: relative;
         }
 
         .heatmap-dot {
-            width: 8px;
-            height: 8px;
+            width: 7px;
+            height: 7px;
             background-color: var(--border);
             border-radius: 50%;
             transition: background-color 0.2s;
+            flex-shrink: 0;
         }
 
         .heatmap-dot.active {
             background-color: var(--accent);
+        }
+
+        .heatmap-overflow {
+            font-size: 0.55rem;
+            font-weight: bold;
+            color: var(--accent);
+            margin-bottom: 2px;
         }
 
         .heatmap-day-label {
@@ -328,7 +337,7 @@
             padding: 4px;
         }
 
-        /* 曲線グラフ用SVGスタイル */
+        /* 忘却曲線グラフ用スタイル */
         .curve-chart-wrap {
             background: #faf8f5;
             border-radius: 12px;
@@ -510,7 +519,7 @@
 
     <!-- 今日の復習画面 -->
     <div id="view-today" class="view-section active">
-        <!-- 直近数日のタスク量ヒートマップ（丸の積み上げ） -->
+        <!-- 直近数日のタスク量ヒートマップ（丸の積み上げ 6個以上対応） -->
         <div class="heatmap-card">
             <div class="heatmap-title">直近7日間のタスク量</div>
             <div class="heatmap-grid" id="heatmap-grid"></div>
@@ -605,7 +614,7 @@
         let db = JSON.parse(localStorage.getItem('recur_db')) || {
             presets: [
                 { id: 'p1', name: 'スタンダード (1, 3, 7, 14, 30日)', intervals: [1, 3, 7, 14, 30] },
-                { id: 'p2', name: '短期集中 (1, 2, 4, 7日)', intervals: [1, 2, 4, 7] }
+                { id: 'p2', name: '短期集中 (1, 2, 4, 7일)', intervals: [1, 2, 4, 7] }
             ],
             tasks: []
         };
@@ -629,6 +638,14 @@
             const date = new Date(y, m - 1, d);
             date.setDate(date.getDate() + days);
             return formatDateStr(date);
+        }
+
+        function diffDays(dateStr1, dateStr2) {
+            const [y1, m1, d1] = dateStr1.split('-').map(Number);
+            const [y2, m2, d2] = dateStr2.split('-').map(Number);
+            const dt1 = new Date(y1, m1 - 1, d1);
+            const dt2 = new Date(y2, m2 - 1, d2);
+            return Math.round((dt2 - dt1) / (1000 * 60 * 60 * 24));
         }
 
         window.onload = function() {
@@ -671,8 +688,8 @@
                 let totalRatings = 0;
                 let ratingCount = 0;
                 db.tasks.forEach(t => {
-                    if (t.ratings && t.ratings.length > 0) {
-                        t.ratings.forEach(r => { totalRatings += r; ratingCount++; });
+                    if (t.history && t.history.length > 0) {
+                        t.history.forEach(h => { totalRatings += h.rating; ratingCount++; });
                     }
                 });
                 const avgRatingBonus = ratingCount > 0 ? (totalRatings / ratingCount) * 5 : 75;
@@ -682,7 +699,7 @@
             document.getElementById('stat-retention').textContent = `${retention}%`;
         }
 
-        // 直近7日間のタスク量ヒートマップ（丸の積み上げ）を描画
+        // 6個以上対応の直近7日間タスク量ヒートマップ
         function renderHeatmap() {
             const grid = document.getElementById('heatmap-grid');
             if (!grid) return;
@@ -690,22 +707,26 @@
             const today = new Date();
             let html = '';
 
-            // 過去3日 + 今日 + 未来3日の計7日間を表示
             for (let i = -3; i <= 3; i++) {
                 const d = new Date(today);
                 d.setDate(today.getDate() + i);
                 const dStr = formatDateStr(d);
                 const monthDay = `${d.getMonth() + 1}/${d.getDate()}`;
                 
-                // その日のタスクを抽出
                 const tasksOnDay = db.tasks.filter(t => t.nextDate === dStr);
                 const count = tasksOnDay.length;
 
-                // 丸の積み上げHTMLを生成（最大5個まで表示）
                 let dotsHtml = '';
-                const maxDots = Math.min(count, 5);
-                for (let j = 0; j < 5; j++) {
-                    const isActive = j < maxDots ? 'active' : '';
+                const maxVisibleDots = 5;
+                const activeDotsCount = Math.min(count, maxVisibleDots);
+                
+                // 6個以上の場合は超過分を上に数字で表示
+                if (count > maxVisibleDots) {
+                    dotsHtml += `<div class="heatmap-overflow">+${count - maxVisibleDots}</div>`;
+                }
+
+                for (let j = 0; j < maxVisibleDots; j++) {
+                    const isActive = j < activeDotsCount ? 'active' : '';
                     dotsHtml += `<div class="heatmap-dot ${isActive}"></div>`;
                 }
 
@@ -794,13 +815,15 @@
             const preset = db.presets.find(p => p.id === presetId);
             if (!preset) return alert('プリセットを選択してください');
 
+            const firstNextDate = addDays(startDate, preset.intervals[0]);
             const newTask = {
                 id: Date.now().toString(),
                 name: name,
                 intervals: preset.intervals,
                 currentStep: 1,
-                nextDate: addDays(startDate, preset.intervals[0]),
-                ratings: [],
+                startDate: startDate,
+                nextDate: firstNextDate,
+                history: [], // 履歴：{ date, rating, step }
                 isRatingMode: false
             };
 
@@ -811,13 +834,12 @@
             switchTab('today');
         }
 
-        // ポップアップ（モーダル）でグラフを開く
         function openChartModal(id) {
             const task = db.tasks.find(t => t.id === id);
             if (!task) return;
 
             document.getElementById('modal-task-name').textContent = task.name;
-            document.getElementById('modal-chart-content').innerHTML = renderCurveChart(task);
+            document.getElementById('modal-chart-content').innerHTML = renderForgettingCurveChart(task);
             document.getElementById('chart-modal').classList.add('active');
         }
 
@@ -838,8 +860,14 @@
             const task = db.tasks.find(t => t.id === id);
             if (!task) return;
 
-            if (!task.ratings) task.ratings = [];
-            task.ratings.push(rating);
+            const todayStr = formatDateStr(new Date());
+
+            if (!task.history) task.history = [];
+            task.history.push({
+                date: todayStr,
+                rating: rating,
+                step: task.currentStep
+            });
 
             const multiplier = rating / 3;
 
@@ -852,14 +880,13 @@
             } else {
                 const baseInterval = task.intervals[task.currentStep - 1];
                 const adjustedInterval = Math.max(1, Math.round(baseInterval * multiplier));
-                const todayStr = formatDateStr(new Date());
+                task.startDate = todayStr; // 次のサイクルの開始日を今日に更新
                 task.nextDate = addDays(todayStr, adjustedInterval);
 
                 task.isRatingMode = false;
                 saveData();
                 renderAll();
                 
-                // 完了直後に大きなポップアップで最新の曲線グラフを表示してあげる
                 openChartModal(task.id);
             }
         }
@@ -889,74 +916,139 @@
             renderList();
         }
 
-        // SVGを使用した滑らかな曲線（スプライン風）の定着度グラフ生成
-        function renderCurveChart(task) {
-            if (!task.ratings || task.ratings.length === 0) {
-                return `<div class="empty-state">まだ評価データがありません。</div>`;
+        // 忘却曲線ふうの減衰グラフ（タスク完了時にゼロに向かう）を描画
+        function renderForgettingCurveChart(task) {
+            const history = task.history || [];
+            
+            // 履歴がない初期状態の場合
+            if (history.length === 0) {
+                return `<div class="empty-state">まだ復習履歴がありません。<br>完了して評価をつけると忘却曲線が表示されます。</div>`;
             }
 
-            const ratings = task.ratings;
-            const avg = (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1);
-
             const width = 320;
-            const height = 140;
+            const height = 150;
             const padding = 24;
             const graphWidth = width - padding * 2;
             const graphHeight = height - padding * 2;
 
-            // 座標計算
-            const points = ratings.map((r, i) => {
-                const x = ratings.length === 1 ? padding + graphWidth / 2 : padding + (i / (ratings.length - 1)) * graphWidth;
-                // 評価1〜5を上向き（y座標反転）に変換
-                const y = padding + graphHeight - ((r - 1) / 4) * graphHeight;
-                return { x, y, r };
+            // グラフ上にプロットする時系列データを構築
+            // 各完了時点から次回予定日に向けて、指数関数的・直線的に値がゼロ（または下限）に向かって減衰する軌跡を作る
+            let curvePoints = [];
+            
+            // 最初のスタート地点
+            const firstDate = history[0].date;
+            
+            history.forEach((h, index) => {
+                // 評価時点のポイント
+                curvePoints.push({
+                    dateStr: h.date,
+                    val: h.rating, // 1〜5
+                    label: `★${h.rating} (回${h.step})`
+                });
+
+                // もし次の履歴、あるいは現在の次回予定日まで日数がある場合、減衰カーブの途中ポイントを補間する
+                const nextTargetDate = (index < history.length - 1) ? history[index + 1].date : task.nextDate;
+                const daysSpan = diffDays(h.date, nextTargetDate);
+                
+                if (daysSpan > 1) {
+                    // 途中の減衰具合をシミュレート（忘却曲線：時間が経つにつれて下がる）
+                    // 評価が高いほど残りやすいが、次回期限に近づくにつれて 0.5〜1.0 辺り（忘却限界）まで減衰する
+                    const midDays = Math.floor(daysSpan / 2);
+                    const midDate = addDays(h.date, midDays);
+                    const decayVal = Math.max(0.8, h.rating * Math.pow(0.7, midDays / Math.max(daysSpan, 1)));
+                    
+                    curvePoints.push({
+                        dateStr: midDate,
+                        val: decayVal,
+                        label: ''
+                    });
+                }
             });
 
-            // SVGの滑らかな曲線パス (贝塞尔曲線 / ベジェ曲線) を作成
-            let pathD = '';
-            if (points.length === 1) {
-                pathD = `M ${points[0].x} ${points[0].y} L ${points[0].x} ${points[0].y}`;
-            } else {
-                pathD = `M ${points[0].x} ${points[0].y}`;
-                for (let i = 0; i < points.length - 1; i++) {
-                    const p0 = points[i];
-                    const p1 = points[i + 1];
-                    const cpX = (p0.x + p1.x) / 2;
-                    pathD += ` C ${cpX} ${p0.y}, ${cpX} ${p1.y}, ${p1.x} ${p1.y}`;
-                }
+            // 現在の期限時点での予測値も追加
+            const todayStr = formatDateStr(new Date());
+            const lastHistory = history[history.length - 1];
+            const spanFromLast = diffDays(lastHistory.date, task.nextDate);
+            const spanFromToday = diffDays(lastHistory.date, todayStr);
+            
+            // X軸の最小日付と最大日付を決めてスケーリング
+            const allDates = curvePoints.map(p => p.dateStr);
+            if (!allDates.includes(task.nextDate)) allDates.push(task.nextDate);
+            if (!allDates.includes(todayStr)) allDates.push(todayStr);
+            allDates.sort();
+
+            const minTime = new Date(allDates[0]).getTime();
+            const maxTime = new Date(allDates[allDates.length - 1]).getTime();
+            const timeRange = Math.max(1, maxTime - minTime);
+
+            const getX = (dateStr) => {
+                const t = new Date(dateStr).getTime();
+                return padding + ((t - minTime) / timeRange) * graphWidth;
+            };
+
+            const getY = (val) => {
+                // val は 0 〜 5
+                const clamped = Math.max(0, Math.min(5, val));
+                return padding + graphHeight - (clamped / 5) * graphHeight;
+            };
+
+            // 描画用座標に変換
+            const points = curvePoints.map(p => ({
+                x: getX(p.dateStr),
+                y: getY(p.val),
+                val: p.val,
+                label: p.label,
+                dateStr: p.dateStr
+            }));
+
+            // ベジェ曲線パスの生成
+            let pathD = `M ${points[0].x} ${points[0].y}`;
+            for (let i = 0; i < points.length - 1; i++) {
+                const p0 = points[i];
+                const p1 = points[i + 1];
+                const cpX = (p0.x + p1.x) / 2;
+                pathD += ` C ${cpX} ${p0.y}, ${cpX} ${p1.y}, ${p1.x} ${p1.y}`;
             }
 
-            // 曲線の下側を塗りつぶすためのパス
-            const firstX = points[0].x;
-            const lastX = points[points.length - 1].x;
-            const fillPathD = `${pathD} L ${lastX} ${height - padding} L ${firstX} ${height - padding} Z`;
+            const fillPathD = `${pathD} L ${points[points.length - 1].x} ${height - padding} L ${points[0].x} ${height - padding} Z`;
 
-            let circlesHtml = points.map(p => `
-                <circle cx="${p.x}" cy="${p.y}" r="5" fill="var(--accent)" />
-                <text x="${p.x}" y="${p.y - 10}" font-size="10" fill="var(--text-sub)" text-anchor="middle" font-weight="bold">★${p.r}</text>
-            `).join('');
+            let dotsHtml = points.map(p => {
+                if (!p.label) return ''; // 補間ポイントはドットのみ
+                return `
+                    <circle cx="${p.x}" cy="${p.y}" r="5" fill="var(--accent)" />
+                    <text x="${p.x}" y="${p.y - 10}" font-size="9" fill="var(--text-sub)" text-anchor="middle" font-weight="bold">${p.label}</text>
+                `;
+            }).join('');
+
+            // 次回予定日のライン位置
+            const nextX = getX(task.nextDate);
 
             return `
                 <div class="curve-chart-wrap" style="margin-bottom:0;">
                     <div class="curve-chart-header">
-                        <span>定着度の推移 (全${ratings.length}回)</span>
-                        <span>★平均: ${avg}</span>
+                        <span>忘却曲線シミュレーション (次回予定: ${task.nextDate})</span>
+                        <span>段階: ${task.currentStep}/${task.intervals.length}</span>
                     </div>
                     <svg viewBox="0 0 ${width} ${height}" style="width: 100%; height: auto; overflow: visible;">
-                        <!-- グリッド線 -->
-                        <line x1="${padding}" y1="${padding}" x2="${width - padding}" y2="${padding}" stroke="var(--border)" stroke-dasharray="3,3" />
-                        <line x1="${padding}" y1="${padding + graphHeight/2}" x2="${width - padding}" y2="${padding + graphHeight/2}" stroke="var(--border)" stroke-dasharray="3,3" />
-                        <line x1="${padding}" y1="${height - padding}" x2="${width - padding}" y2="${height - padding}" stroke="var(--border)" />
+                        <!-- 忘却の基準線（ゼロ/減衰限界ライン） -->
+                        <line x1="${padding}" y1="${height - padding}" x2="${width - padding}" y2="${height - padding}" stroke="var(--danger)" stroke-dasharray="2,2" opacity="0.5" />
+                        <text x="${width - padding}" y="${height - padding - 4}" font-size="8" fill="var(--danger)" text-anchor="end">忘却限界 (0)</text>
+
+                        <!-- 次回予定日の縦線 -->
+                        <line x1="${nextX}" y1="${padding}" x2="${nextX}" y2="${height - padding}" stroke="var(--accent)" stroke-dasharray="3,3" opacity="0.4" />
 
                         <!-- 塗りつぶしエリア -->
                         <path d="${fillPathD}" fill="var(--accent)" opacity="0.08" />
 
-                        <!-- 滑らかな曲線 -->
-                        <path d="${pathD}" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+                        <!-- 忘却曲線パス -->
+                        <path d="${pathD}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
 
-                        <!-- データポイントと数値 -->
-                        ${circlesHtml}
+                        <!-- プロット点 -->
+                        ${dotsHtml}
                     </svg>
+                    <div style="font-size: 0.7rem; color: var(--text-sub); margin-top: 8px; text-align: center;">
+                        ※時間が経過し次回予定日に近づくにつれて記憶が減衰します
+                    </div>
                 </div>
             `;
         }
@@ -991,10 +1083,11 @@
                         </div>
                     `;
                 } else {
+                    const lastRating = task.history && task.history.length > 0 ? task.history[task.history.length - 1].rating : '-';
                     content = `
                         <div class="task-meta">
                             <span>段階: ${task.currentStep}回目 / 全${task.intervals.length}回</span>
-                            ${task.ratings && task.ratings.length > 0 ? `<span>直近: ★${task.ratings[task.ratings.length-1]}</span>` : ''}
+                            <span>直近評価: ★${lastRating}</span>
                         </div>
                         <div class="task-actions">
                             <button class="btn btn-complete" onclick="promptRating('${task.id}')">完了</button>
@@ -1104,4 +1197,3 @@
     </script>
 </body>
 </html>
-
