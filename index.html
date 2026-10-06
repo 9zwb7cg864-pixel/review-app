@@ -56,6 +56,63 @@
             font-weight: 500;
         }
 
+        /* 直近数日のタスク量ヒートマップ（丸の積み上げ） */
+        .heatmap-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(0,0,0,0.02);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        }
+
+        .heatmap-title {
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+            color: var(--text-sub);
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .heatmap-grid {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 4px;
+            height: 70px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .heatmap-day-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+            justify-content: flex-end;
+            gap: 3px;
+        }
+
+        .heatmap-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--border);
+            border-radius: 50%;
+            transition: background-color 0.2s;
+        }
+
+        .heatmap-dot.active {
+            background-color: var(--accent);
+        }
+
+        .heatmap-day-label {
+            font-size: 0.6rem;
+            color: var(--text-sub);
+            margin-top: 4px;
+            text-align: center;
+        }
+
         /* 統計サマリーパネル */
         .stats-grid {
             display: grid;
@@ -216,53 +273,77 @@
             border-color: var(--accent);
         }
 
-        /* グラフエリア */
-        .chart-container {
-            margin-top: 12px;
-            padding: 12px;
-            background: #faf8f5;
-            border-radius: 10px;
-            border: 1px solid var(--border);
+        /* ポップアップ（モーダル）ウィンドウ */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
         }
 
-        .chart-title {
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-card {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 400px;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            animation: modalPop 0.2s ease-out;
+        }
+
+        @keyframes modalPop {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .modal-close-btn {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: var(--text-sub);
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        /* 曲線グラフ用SVGスタイル */
+        .curve-chart-wrap {
+            background: #faf8f5;
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid var(--border);
+            margin-bottom: 16px;
+        }
+
+        .curve-chart-header {
             font-size: 0.75rem;
             font-weight: 600;
             color: var(--text-sub);
-            margin-bottom: 8px;
+            margin-bottom: 12px;
             display: flex;
             justify-content: space-between;
-        }
-
-        .chart-bars {
-            display: flex;
-            align-items: flex-end;
-            gap: 8px;
-            height: 60px;
-            padding-top: 10px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .chart-bar-wrap {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            height: 100%;
-            justify-content: flex-end;
-        }
-
-        .chart-bar {
-            width: 100%;
-            background: var(--accent);
-            border-radius: 4px 4px 0 0;
-            transition: height 0.3s ease;
-        }
-
-        .chart-bar-label {
-            font-size: 0.65rem;
-            color: var(--text-sub);
-            margin-top: 4px;
         }
 
         /* フォーム要素 */
@@ -322,7 +403,6 @@
         }
         .badge-today { background: #edf4ee; color: var(--success); }
         .badge-overdue { background: #fdf2f1; color: var(--danger); }
-        .badge-future { background: #f2eee9; color: var(--text-sub); }
 
         .empty-state {
             text-align: center;
@@ -430,6 +510,12 @@
 
     <!-- 今日の復習画面 -->
     <div id="view-today" class="view-section active">
+        <!-- 直近数日のタスク量ヒートマップ（丸の積み上げ） -->
+        <div class="heatmap-card">
+            <div class="heatmap-title">直近7日間のタスク量</div>
+            <div class="heatmap-grid" id="heatmap-grid"></div>
+        </div>
+
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-label">RETENTION</div>
@@ -504,6 +590,17 @@
         <div id="all-task-list"></div>
     </div>
 
+    <!-- グラフ表示用ポップアップ（モーダル） -->
+    <div class="modal-overlay" id="chart-modal" onclick="closeChartModal(event)">
+        <div class="modal-card" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div class="modal-title" id="modal-task-name">タスク名</div>
+                <button class="modal-close-btn" onclick="closeChartModal()">✕</button>
+            </div>
+            <div id="modal-chart-content"></div>
+        </div>
+    </div>
+
     <script>
         let db = JSON.parse(localStorage.getItem('recur_db')) || {
             presets: [
@@ -538,7 +635,6 @@
             const options = { weekday: 'short', month: 'short', day: 'numeric' };
             document.getElementById('header-date').textContent = new Date().toLocaleDateString('en-US', options);
             
-            // 新規作成画面の開始日の初期値を「今日」に設定
             const startDateInput = document.getElementById('task-start-date');
             if (startDateInput) {
                 startDateInput.value = formatDateStr(new Date());
@@ -555,7 +651,6 @@
             document.querySelectorAll('.tab-btn')[tabMap[tabName]].classList.add('active');
             document.getElementById(`view-${tabName}`).classList.add('active');
             
-            // 新規作成タブを開いたとき、開始日が空なら今日を入れる
             if (tabName === 'add') {
                 const startDateInput = document.getElementById('task-start-date');
                 if (startDateInput && !startDateInput.value) {
@@ -585,6 +680,43 @@
                 retention = Math.min(100, Math.max(20, Math.round(avgRatingBonus - overduePenalty + 30)));
             }
             document.getElementById('stat-retention').textContent = `${retention}%`;
+        }
+
+        // 直近7日間のタスク量ヒートマップ（丸の積み上げ）を描画
+        function renderHeatmap() {
+            const grid = document.getElementById('heatmap-grid');
+            if (!grid) return;
+
+            const today = new Date();
+            let html = '';
+
+            // 過去3日 + 今日 + 未来3日の計7日間を表示
+            for (let i = -3; i <= 3; i++) {
+                const d = new Date(today);
+                d.setDate(today.getDate() + i);
+                const dStr = formatDateStr(d);
+                const monthDay = `${d.getMonth() + 1}/${d.getDate()}`;
+                
+                // その日のタスクを抽出
+                const tasksOnDay = db.tasks.filter(t => t.nextDate === dStr);
+                const count = tasksOnDay.length;
+
+                // 丸の積み上げHTMLを生成（最大5個まで表示）
+                let dotsHtml = '';
+                const maxDots = Math.min(count, 5);
+                for (let j = 0; j < 5; j++) {
+                    const isActive = j < maxDots ? 'active' : '';
+                    dotsHtml += `<div class="heatmap-dot ${isActive}"></div>`;
+                }
+
+                html += `
+                    <div class="heatmap-day-col">
+                        ${dotsHtml}
+                        <div class="heatmap-day-label">${monthDay}</div>
+                    </div>
+                `;
+            }
+            grid.innerHTML = html;
         }
 
         function createPreset() {
@@ -667,10 +799,9 @@
                 name: name,
                 intervals: preset.intervals,
                 currentStep: 1,
-                nextDate: addDays(startDate, preset.intervals[0]), // 最初の復習日は「開始日 ＋ プリセットの最初の日数」
+                nextDate: addDays(startDate, preset.intervals[0]),
                 ratings: [],
-                isRatingMode: false,
-                showChart: false
+                isRatingMode: false
             };
 
             db.tasks.push(newTask);
@@ -680,11 +811,20 @@
             switchTab('today');
         }
 
-        function toggleChart(id) {
+        // ポップアップ（モーダル）でグラフを開く
+        function openChartModal(id) {
             const task = db.tasks.find(t => t.id === id);
             if (!task) return;
-            task.showChart = !task.showChart;
-            renderAll();
+
+            document.getElementById('modal-task-name').textContent = task.name;
+            document.getElementById('modal-chart-content').innerHTML = renderCurveChart(task);
+            document.getElementById('chart-modal').classList.add('active');
+        }
+
+        function closeChartModal(event) {
+            if (!event || event.target.id === 'chart-modal' || event.target.classList.contains('modal-close-btn')) {
+                document.getElementById('chart-modal').classList.remove('active');
+            }
         }
 
         function promptRating(id) {
@@ -706,16 +846,22 @@
             task.currentStep++;
             if (task.currentStep > task.intervals.length) {
                 db.tasks = db.tasks.filter(t => t.id !== id);
+                saveData();
+                renderAll();
+                alert('全サイクルの復習が完了しました！素晴らしいです！');
             } else {
                 const baseInterval = task.intervals[task.currentStep - 1];
                 const adjustedInterval = Math.max(1, Math.round(baseInterval * multiplier));
-                task.nextDate = addDays(formatDateStr(new Date()), adjustedInterval);
-                task.isRatingMode = false;
-                task.showChart = true;
-            }
+                const todayStr = formatDateStr(new Date());
+                task.nextDate = addDays(todayStr, adjustedInterval);
 
-            saveData();
-            renderAll();
+                task.isRatingMode = false;
+                saveData();
+                renderAll();
+                
+                // 完了直後に大きなポップアップで最新の曲線グラフを表示してあげる
+                openChartModal(task.id);
+            }
         }
 
         function postponeTask(id) {
@@ -736,36 +882,81 @@
 
         function renderAll() {
             updateStats();
+            renderHeatmap();
             renderPresets();
             renderToday();
             renderCalendar();
             renderList();
         }
 
-        function renderRatingChart(task) {
+        // SVGを使用した滑らかな曲線（スプライン風）の定着度グラフ生成
+        function renderCurveChart(task) {
             if (!task.ratings || task.ratings.length === 0) {
-                return `<div class="chart-container"><div class="chart-title">定着度履歴 (まだ評価がありません)</div></div>`;
+                return `<div class="empty-state">まだ評価データがありません。</div>`;
             }
 
-            const barsHtml = task.ratings.map((r, index) => {
-                const heightPercent = (r / 5) * 100;
-                return `
-                    <div class="chart-bar-wrap">
-                        <div class="chart-bar" style="height: ${heightPercent}%;"></div>
-                        <div class="chart-bar-label">${r}</div>
-                    </div>
-                `;
-            }).join('');
+            const ratings = task.ratings;
+            const avg = (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1);
+
+            const width = 320;
+            const height = 140;
+            const padding = 24;
+            const graphWidth = width - padding * 2;
+            const graphHeight = height - padding * 2;
+
+            // 座標計算
+            const points = ratings.map((r, i) => {
+                const x = ratings.length === 1 ? padding + graphWidth / 2 : padding + (i / (ratings.length - 1)) * graphWidth;
+                // 評価1〜5を上向き（y座標反転）に変換
+                const y = padding + graphHeight - ((r - 1) / 4) * graphHeight;
+                return { x, y, r };
+            });
+
+            // SVGの滑らかな曲線パス (贝塞尔曲線 / ベジェ曲線) を作成
+            let pathD = '';
+            if (points.length === 1) {
+                pathD = `M ${points[0].x} ${points[0].y} L ${points[0].x} ${points[0].y}`;
+            } else {
+                pathD = `M ${points[0].x} ${points[0].y}`;
+                for (let i = 0; i < points.length - 1; i++) {
+                    const p0 = points[i];
+                    const p1 = points[i + 1];
+                    const cpX = (p0.x + p1.x) / 2;
+                    pathD += ` C ${cpX} ${p0.y}, ${cpX} ${p1.y}, ${p1.x} ${p1.y}`;
+                }
+            }
+
+            // 曲線の下側を塗りつぶすためのパス
+            const firstX = points[0].x;
+            const lastX = points[points.length - 1].x;
+            const fillPathD = `${pathD} L ${lastX} ${height - padding} L ${firstX} ${height - padding} Z`;
+
+            let circlesHtml = points.map(p => `
+                <circle cx="${p.x}" cy="${p.y}" r="5" fill="var(--accent)" />
+                <text x="${p.x}" y="${p.y - 10}" font-size="10" fill="var(--text-sub)" text-anchor="middle" font-weight="bold">★${p.r}</text>
+            `).join('');
 
             return `
-                <div class="chart-container">
-                    <div class="chart-title">
-                        <span>定着度の推移 (全${task.ratings.length}回)</span>
-                        <span>★平均: ${(task.ratings.reduce((a, b) => a + b, 0) / task.ratings.length).toFixed(1)}</span>
+                <div class="curve-chart-wrap" style="margin-bottom:0;">
+                    <div class="curve-chart-header">
+                        <span>定着度の推移 (全${ratings.length}回)</span>
+                        <span>★平均: ${avg}</span>
                     </div>
-                    <div class="chart-bars">
-                        ${barsHtml}
-                    </div>
+                    <svg viewBox="0 0 ${width} ${height}" style="width: 100%; height: auto; overflow: visible;">
+                        <!-- グリッド線 -->
+                        <line x1="${padding}" y1="${padding}" x2="${width - padding}" y2="${padding}" stroke="var(--border)" stroke-dasharray="3,3" />
+                        <line x1="${padding}" y1="${padding + graphHeight/2}" x2="${width - padding}" y2="${padding + graphHeight/2}" stroke="var(--border)" stroke-dasharray="3,3" />
+                        <line x1="${padding}" y1="${height - padding}" x2="${width - padding}" y2="${height - padding}" stroke="var(--border)" />
+
+                        <!-- 塗りつぶしエリア -->
+                        <path d="${fillPathD}" fill="var(--accent)" opacity="0.08" />
+
+                        <!-- 滑らかな曲線 -->
+                        <path d="${pathD}" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+
+                        <!-- データポイントと数値 -->
+                        ${circlesHtml}
+                    </svg>
                 </div>
             `;
         }
@@ -815,8 +1006,7 @@
                 return `
                     <div class="card">
                         <span class="badge ${badgeClass}">${badgeText}</span>
-                        <div class="task-title" onclick="toggleChart('${task.id}')">${escapeHtml(task.name)} <span style="font-size:0.7rem; color:var(--text-sub);">📊 グラフ</span></div>
-                        ${task.showChart ? renderRatingChart(task) : ''}
+                        <div class="task-title" onclick="openChartModal('${task.id}')">${escapeHtml(task.name)} <span style="font-size:0.7rem; color:var(--text-sub);">📊 グラフ</span></div>
                         ${content}
                     </div>
                 `;
@@ -882,8 +1072,8 @@
 
             container.innerHTML = tasks.map(task => `
                 <div style="padding: 8px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <div style="font-weight: 600; font-size: 0.95rem;">${escapeHtml(task.name)}</div>
+                    <div style="cursor: pointer;" onclick="openChartModal('${task.id}')">
+                        <div style="font-weight: 600; font-size: 0.95rem;">${escapeHtml(task.name)} <span style="font-size:0.7rem; color:var(--text-sub);">📊</span></div>
                         <div style="font-size: 0.75rem; color: var(--text-sub);">段階: ${task.currentStep}回目</div>
                     </div>
                 </div>
@@ -897,21 +1087,15 @@
                 return;
             }
 
-            const today = formatDateStr(new Date());
-
-            container.innerHTML = db.tasks.map(task => {
-                const isFuture = task.nextDate > today;
-                return `
-                    <div class="card">
-                        <div class="task-title" onclick="toggleChart('${task.id}')">${escapeHtml(task.name)} <span style="font-size:0.7rem; color:var(--text-sub);">📊 グラフ</span></div>
-                        ${task.showChart ? renderRatingChart(task) : ''}
-                        <div class="task-meta" style="margin-top: 8px;">
-                            <span>次回予定: ${task.nextDate} (${task.currentStep}/${task.intervals.length}回目)</span>
-                            <button class="delete-text" onclick="deleteTask('${task.id}')">削除</button>
-                        </div>
+            container.innerHTML = db.tasks.map(task => `
+                <div class="card">
+                    <div class="task-title" onclick="openChartModal('${task.id}')">${escapeHtml(task.name)} <span style="font-size:0.7rem; color:var(--text-sub);">📊 グラフ</span></div>
+                    <div class="task-meta" style="margin-top: 8px;">
+                        <span>次回予定: ${task.nextDate} (${task.currentStep}/${task.intervals.length}回目)</span>
+                        <button class="delete-text" onclick="deleteTask('${task.id}')">削除</button>
                     </div>
-                `;
-            }).join('');
+                </div>
+            `).join('');
         }
 
         function escapeHtml(str) {
@@ -920,5 +1104,4 @@
     </script>
 </body>
 </html>
-        
 
