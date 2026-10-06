@@ -3,13 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RECUR - Review Manager</title
-   <link rel="apple-touch-icon" href="icon23.png">
-<link rel="icon" type="image/png" href="icon23.png">                                  
-       <!-- iOS / Android共通アイコン（Base64 PNG形式） -->
-<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAICAQMAAAB/Un56AAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlMA/4VKNP8AAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAWSURBVHic7cExAQAAAMKg9U9tDB8gAAAAAAB4M0wAAAGrD1r2AAAAAElFTkSuQmCC">
-<link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAICAQMAAAB/Un56AAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlMA/4VKNP8AAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAWSURBVHic7cExAQAAAMKg9U9tDB8gAAAAAAB4M0wAAAGrD1r2AAAAAElFTkSuQmCC">                              
-    <link rel="apple-touch-icon" href="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%23ffffff' stroke='%23b2c8bd' stroke-width='12'/%3E%3C!-- 循環する矢印 --%3E%3Cpath d='M256 120c-75 0-136 61-136 136h32c0-57.4 46.6-104 104-104s104 46.6 104 104h32c0-75-61-136-136-136z' fill='%239ab8a8'/%3E%3Cpath d='M104 232l-28 32 48 20z' fill='%239ab8a8'/%3E%3Cpath d='M408 280l28-32-48-20z' fill='%239ab8a8'/%3E%3C!-- 中央のペンモチーフ --%3E%3Cpath d='M240 160h32v200h-32z' fill='%239ab8a8'/%3E%3Cpath d='M256 140l20 20h-40z' fill='%237a9a8a'/%3E%3Cpath d='M240 360l16 32 16-32z' fill='%237a9a8a'/%3E%3C/svg%3E">
+    <title>RECUR - Review & Study Manager</title>
     <style>
         :root {
             --bg-color: #f7f5f0;
@@ -37,14 +31,14 @@
             padding: 20px 16px;
             max-width: 500px;
             margin: 0 auto;
-            padding-bottom: 90px;
+            padding-bottom: 110px;
         }
 
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
             padding-bottom: 8px;
             border-bottom: 1px solid var(--border);
         }
@@ -112,7 +106,7 @@
             margin-bottom: 24px;
         }
 
-        /* 直近数日のタスク量ヒートマップ */
+        /* ヒートマップ */
         .heatmap-card {
             background: var(--card-bg);
             border-radius: 16px;
@@ -178,7 +172,7 @@
             text-align: center;
         }
 
-        /* 統計サマリーパネル */
+        /* 統計サマリー */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -203,7 +197,7 @@
         }
 
         .stat-value {
-            font-size: 1.8rem;
+            font-size: 1.5rem;
             font-weight: 700;
             color: var(--text-main);
         }
@@ -211,23 +205,25 @@
         /* ナビゲーションタブ */
         .nav-tabs {
             display: flex;
-            gap: 6px;
-            margin-bottom: 24px;
+            gap: 4px;
+            margin-bottom: 20px;
             background: #ede8e1;
             padding: 4px;
             border-radius: 12px;
+            overflow-x: auto;
         }
 
         .tab-btn {
             flex: 1;
-            padding: 8px;
+            padding: 8px 6px;
             border: none;
             background: transparent;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: 600;
             color: var(--text-sub);
             border-radius: 8px;
             cursor: pointer;
+            white-space: nowrap;
             transition: all 0.2s ease;
         }
 
@@ -335,7 +331,6 @@
             font-weight: 700;
             color: var(--text-main);
             cursor: pointer;
-            transition: all 0.1s ease;
         }
 
         .btn-rate:hover {
@@ -356,82 +351,8 @@
             font-weight: 600;
             cursor: pointer;
         }
-        .btn-back:hover {
-            background: #e6e2db;
-        }
 
-        /* モーダルウィンドウ */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-            padding: 16px;
-        }
-
-        .modal-overlay.active {
-            display: flex;
-        }
-
-        .modal-card {
-            background: var(--card-bg);
-            width: 100%;
-            max-width: 400px;
-            border-radius: 20px;
-            padding: 24px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            animation: modalPop 0.2s ease-out;
-        }
-
-        @keyframes modalPop {
-            from { transform: scale(0.9); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 16px;
-        }
-
-        .modal-title {
-            font-size: 1.2rem;
-            font-weight: 700;
-        }
-
-        .modal-close-btn {
-            background: none;
-            border: none;
-            font-size: 1.2rem;
-            color: var(--text-sub);
-            cursor: pointer;
-            padding: 4px;
-        }
-
-        .curve-chart-wrap {
-            background: #faf8f5;
-            border-radius: 12px;
-            padding: 16px;
-            border: 1px solid var(--border);
-            margin-bottom: 16px;
-        }
-
-        .curve-chart-header {
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: var(--text-sub);
-            margin-bottom: 12px;
-            display: flex;
-            justify-content: space-between;
-        }
-
+        /* フォーム系 */
         .form-group {
             margin-bottom: 16px;
             text-align: left;
@@ -446,7 +367,7 @@
             letter-spacing: 0.5px;
         }
 
-        input[type="text"], input[type="date"], select {
+        input[type="text"], input[type="date"], input[type="number"], select {
             width: 100%;
             padding: 12px;
             border: 1px solid var(--border);
@@ -457,8 +378,16 @@
             outline: none;
         }
 
-        input[type="text"]:focus, input[type="date"]:focus, select:focus {
-            border-color: var(--accent);
+        .time-inputs {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .time-inputs div {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
 
         .task-title {
@@ -488,6 +417,7 @@
         }
         .badge-today { background: #edf4ee; color: var(--success); }
         .badge-overdue { background: #fdf2f1; color: var(--danger); }
+        .badge-additional { background: #fbf3e4; color: #a17825; }
 
         .empty-state {
             text-align: center;
@@ -564,17 +494,153 @@
             padding: 4px 0;
         }
 
-        .preset-tag {
-            display: inline-flex;
-            align-items: center;
+        /* 学習時間ログタブ用スタイル */
+        .study-log-container {
+            max-height: calc(100vh - 220px);
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .log-date-group {
+            margin-bottom: 20px;
+        }
+
+        .log-date-header {
+            display: flex;
             justify-content: space-between;
-            background: #faf8f5;
-            border: 1px solid var(--border);
-            padding: 8px 12px;
-            border-radius: 8px;
-            margin-bottom: 6px;
-            font-size: 0.85rem;
+            align-items: baseline;
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .log-date-total {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .log-item-card {
+            background: var(--card-bg);
+            border-radius: 14px;
+            padding: 14px 16px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(0,0,0,0.02);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+            border-left: 4px solid var(--accent);
+        }
+
+        .log-item-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .log-item-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .log-item-subject {
+            font-size: 0.95rem;
+            font-weight: 700;
+        }
+
+        .log-item-tag {
+            font-size: 0.75rem;
+            color: var(--text-sub);
+        }
+
+        .log-item-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .log-item-time {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        /* 浮動プラスボタン */
+        .fab-btn {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            background-color: var(--accent);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.8rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            cursor: pointer;
+            border: none;
+            z-index: 99;
+            transition: transform 0.1s;
+        }
+        .fab-btn:active {
+            transform: scale(0.92);
+        }
+
+        /* モーダル */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-card {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 400px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .modal-close-btn {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: var(--text-sub);
+            cursor: pointer;
+            padding: 4px;
         }
     </style>
 </head>
@@ -584,7 +650,7 @@
     <div id="view-auth" class="auth-container">
         <div class="auth-card">
             <div class="auth-title">RECUR</div>
-            <div class="auth-subtitle">復習管理マネージャー</div>
+            <div class="auth-subtitle">復習・学習時間マネージャー</div>
             <div class="form-group">
                 <label>ユーザー名を入力</label>
                 <input type="text" id="login-username" placeholder="例：taro / study_user">
@@ -593,7 +659,7 @@
         </div>
     </div>
 
-    <!-- アプリ本体（ログイン後に表示） -->
+    <!-- アプリ本体 -->
     <div id="app-main" class="app-container">
         <header>
             <div class="brand">RECUR</div>
@@ -606,8 +672,7 @@
         <div class="nav-tabs">
             <button class="tab-btn active" onclick="switchTab('today')">今日</button>
             <button class="tab-btn" onclick="switchTab('calendar')">カレンダー</button>
-            <button class="tab-btn" onclick="switchTab('add')">新規作成</button>
-            <button class="tab-btn" onclick="switchTab('presets')">間隔設定</button>
+            <button class="tab-btn" onclick="switchTab('studylogs')">学習時間ログ</button>
             <button class="tab-btn" onclick="switchTab('list')">一覧</button>
         </div>
 
@@ -620,8 +685,8 @@
 
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-label">RETENTION</div>
-                    <div class="stat-value" id="stat-retention">100%</div>
+                    <div class="stat-label">本日の合計所要時間</div>
+                    <div class="stat-value" id="stat-total-time" style="font-size: 1.3rem;">0時間0分0秒</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-label">BACKLOG</div>
@@ -630,6 +695,8 @@
             </div>
 
             <div id="today-task-list"></div>
+            <!-- ホーム画面のプラスボタン -->
+            <button class="fab-btn" onclick="openTaskModal()">+</button>
         </div>
 
         <!-- カレンダー画面 -->
@@ -648,43 +715,10 @@
             </div>
         </div>
 
-        <!-- 新規作成画面 -->
-        <div id="view-add" class="view-section">
-            <div class="card">
-                <div class="form-group">
-                    <label>タスク名</label>
-                    <input type="text" id="task-name" placeholder="例：英単語 / 第3章の復習">
-                </div>
-                <div class="form-group">
-                    <label>開始日（復習をスタートする日）</label>
-                    <input type="date" id="task-start-date">
-                </div>
-                <div class="form-group">
-                    <label>復習間隔プリセットを選択</label>
-                    <select id="task-preset-select"></select>
-                </div>
-                <button class="btn btn-primary" onclick="createTask()">タスクを追加する</button>
-            </div>
-        </div>
-
-        <!-- プリセット管理画面 -->
-        <div id="view-presets" class="view-section">
-            <div class="card">
-                <h3 style="font-size: 0.95rem; margin-bottom: 12px;">新しい間隔プリセットを追加</h3>
-                <div class="form-group">
-                    <label>プリセット名</label>
-                    <input type="text" id="preset-name" placeholder="例：じっくりコース、暗記用など">
-                </div>
-                <div class="form-group">
-                    <label>復習間隔（日数をカンマ区切りで入力）</label>
-                    <input type="text" id="preset-intervals" placeholder="例: 1, 3, 7, 14, 30">
-                </div>
-                <button class="btn btn-primary" onclick="createPreset()">プリセットを保存</button>
-            </div>
-            <div class="card">
-                <h3 style="font-size: 0.95rem; margin-bottom: 12px;">登録済みのプリセット</h3>
-                <div id="preset-list"></div>
-            </div>
+        <!-- 学習時間ログ画面 -->
+        <div id="view-studylogs" class="view-section">
+            <div class="study-log-container" id="study-log-list"></div>
+            <button class="fab-btn" onclick="openStudyLogModal()">+</button>
         </div>
 
         <!-- 全タスク管理画面 -->
@@ -693,7 +727,7 @@
         </div>
     </div>
 
-    <!-- グラフ表示用ポップアップ（モーダル） -->
+    <!-- グラフ・詳細モーダル -->
     <div class="modal-overlay" id="chart-modal" onclick="closeChartModal(event)">
         <div class="modal-card" onclick="event.stopPropagation()">
             <div class="modal-header">
@@ -704,9 +738,82 @@
         </div>
     </div>
 
+    <!-- タスク新規作成モーダル（間隔設定内蔵・追加ボタン最上部配置） -->
+    <div class="modal-overlay" id="task-modal" onclick="closeTaskModal(event)">
+        <div class="modal-card" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div class="modal-title">新規タスク作成</div>
+                <button class="modal-close-btn" onclick="closeTaskModal()">✕</button>
+            </div>
+            
+            <!-- 「タスクを追加する」ボタンを1番上に配置 -->
+            <button class="btn btn-primary" style="margin-bottom: 16px;" onclick="createTask()">タスクを追加する</button>
+
+            <div class="form-group">
+                <label>タスク名（教科名など）</label>
+                <input type="text" id="task-name" placeholder="例：簿記論財務諸表論">
+            </div>
+            <div class="form-group">
+                <label>初回の所要時間</label>
+                <div class="time-inputs">
+                    <div><input type="number" id="task-time-min" min="0" value="5"><span>分</span></div>
+                    <div><input type="number" id="task-time-sec" min="0" max="59" value="0"><span>秒</span></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>開始日（復習をスタートする日）</label>
+                <input type="date" id="task-start-date">
+            </div>
+            <div class="form-group">
+                <label>復習間隔プリセットを選択</label>
+                <select id="task-preset-select" onchange="handlePresetChange()"></select>
+            </div>
+            
+            <!-- 間隔設定の内蔵セクション -->
+            <div style="background: #faf8f5; border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 8px;">
+                <label style="margin-bottom: 8px;">カスタム / 新規間隔プリセットの追加</label>
+                <div class="form-group" style="margin-bottom: 8px;">
+                    <input type="text" id="inline-preset-name" placeholder="プリセット名（例：直前対策コース）" style="font-size:0.9rem; padding:8px;">
+                </div>
+                <div class="form-group" style="margin-bottom: 8px;">
+                    <input type="text" id="inline-preset-intervals" placeholder="日数をカンマ区切り (例: 1, 3, 7, 14)" style="font-size:0.9rem; padding:8px;">
+                </div>
+                <button class="btn" style="background:#ede8e1; color:var(--text-main); font-size:0.85rem; padding:8px;" onclick="createInlinePreset()">新しい間隔として登録</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 学習時間追加モーダル（独立した教科選択・入力対応） -->
+    <div class="modal-overlay" id="study-modal" onclick="closeStudyModal(event)">
+        <div class="modal-card" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div class="modal-title">学習時間を追加</div>
+                <button class="modal-close-btn" onclick="closeStudyModal()">✕</button>
+            </div>
+            <div class="form-group">
+                <label>日付</label>
+                <input type="date" id="study-date">
+            </div>
+            <div class="form-group">
+                <label>教科 / タスク名（選択または新規入力）</label>
+                <select id="study-subject-select" onchange="handleStudySubjectChange()" style="margin-bottom: 8px;"></select>
+                <input type="text" id="study-subject-custom" placeholder="または新しい教科名を入力..." style="display:none; font-size:0.9rem; padding:10px;">
+            </div>
+            <div class="form-group">
+                <label>学習時間</label>
+                <div class="time-inputs">
+                    <div><input type="number" id="study-time-hour" min="0" value="1"><span>時間</span></div>
+                    <div><input type="number" id="study-time-min" min="0" max="59" value="0"><span>分</span></div>
+                    <div><input type="number" id="study-time-sec" min="0" max="59" value="0"><span>秒</span></div>
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="saveStudyLog()">保存する</button>
+        </div>
+    </div>
+
     <script>
         let currentUser = localStorage.getItem('recur_current_user') || null;
-        let db = { presets: [], tasks: [] };
+        let db = { presets: [], tasks: [], studyLogs: [] };
 
         let currentDate = new Date();
         let selectedDateStr = formatDateStr(new Date());
@@ -716,14 +823,16 @@
             const data = localStorage.getItem(`recur_db_${currentUser}`);
             if (data) {
                 db = JSON.parse(data);
+                if (!db.studyLogs) db.studyLogs = [];
+                db.studyLogs = db.studyLogs.filter(l => l.subject !== 'あ');
             } else {
-                // デフォルトのプリセット
                 db = {
                     presets: [
                         { id: 'p1', name: 'スタンダード (1, 3, 7, 14, 30日)', intervals: [1, 3, 7, 14, 30] },
                         { id: 'p2', name: '短期集中 (1, 2, 4, 7日)', intervals: [1, 2, 4, 7] }
                     ],
-                    tasks: []
+                    tasks: [],
+                    studyLogs: []
                 };
                 saveData();
             }
@@ -731,6 +840,9 @@
 
         function saveData() {
             if (!currentUser) return;
+            if (db.studyLogs) {
+                db.studyLogs = db.studyLogs.filter(l => l.subject !== 'あ');
+            }
             localStorage.setItem(`recur_db_${currentUser}`, JSON.stringify(db));
         }
 
@@ -770,12 +882,54 @@
             return formatDateStr(date);
         }
 
-        function diffDays(dateStr1, dateStr2) {
+        function getDaysDiff(dateStr1, dateStr2) {
             const [y1, m1, d1] = dateStr1.split('-').map(Number);
             const [y2, m2, d2] = dateStr2.split('-').map(Number);
-            const dt1 = new Date(y1, m1 - 1, d1);
-            const dt2 = new Date(y2, m2 - 1, d2);
-            return Math.round((dt2 - dt1) / (1000 * 60 * 60 * 24));
+            const date1 = new Date(y1, m1 - 1, d1);
+            const date2 = new Date(y2, m2 - 1, d2);
+            return Math.round((date2 - date1) / (1000 * 60 * 60 * 24));
+        }
+
+        function getScoreFromRating(rating) {
+            switch(rating) {
+                case 5: return 1.0;
+                case 4: return 0.8;
+                case 3: return 0.6;
+                case 2: return 0.4;
+                case 1: return 0.2;
+                default: return 0.6;
+            }
+        }
+
+        function calculateCurrentRetention(task) {
+            const history = task.history || [];
+            if (history.length === 0) return 0;
+            let cumulativeSn = 0;
+            history.forEach((h, idx) => {
+                let qi = getScoreFromRating(h.rating);
+                let di = 0;
+                if (idx > 0) {
+                    di = getDaysDiff(history[idx - 1].date, h.date);
+                    if (di < 0) di = 0;
+                }
+                let term = qi * (1 + 0.2 * Math.log2(di + 1));
+                cumulativeSn += term;
+            });
+            let dn = Math.round(100 * (1 - Math.exp(-0.6 * cumulativeSn)));
+            return Math.min(100, Math.max(0, dn));
+        }
+
+        function formatSecondsToHMS(totalSec) {
+            const h = Math.floor(totalSec / 3600);
+            const m = Math.floor((totalSec % 3600) / 60);
+            const s = totalSec % 60;
+            if (h > 0) {
+                return `${h}時間${m}分${s}秒`;
+            } else if (m > 0) {
+                return `${m}分${s}秒`;
+            } else {
+                return `${s}秒`;
+            }
         }
 
         window.onload = function() {
@@ -795,11 +949,6 @@
 
             const options = { weekday: 'short', month: 'short', day: 'numeric' };
             document.getElementById('header-date').textContent = new Date().toLocaleDateString('en-US', options);
-            
-            const startDateInput = document.getElementById('task-start-date');
-            if (startDateInput) {
-                startDateInput.value = formatDateStr(new Date());
-            }
 
             renderAll();
         }
@@ -808,39 +957,34 @@
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
 
-            const tabMap = { today: 0, calendar: 1, add: 2, presets: 3, list: 4 };
+            const tabMap = { today: 0, calendar: 1, studylogs: 2, list: 3 };
             document.querySelectorAll('.tab-btn')[tabMap[tabName]].classList.add('active');
             document.getElementById(`view-${tabName}`).classList.add('active');
-            
-            if (tabName === 'add') {
-                const startDateInput = document.getElementById('task-start-date');
-                if (startDateInput && !startDateInput.value) {
-                    startDateInput.value = formatDateStr(new Date());
-                }
-            }
 
             renderAll();
         }
 
+        function generateSchedule(startDate, intervals) {
+            let schedule = [];
+            let currDate = startDate;
+            for (let i = 0; i < intervals.length; i++) {
+                currDate = addDays(currDate, intervals[i]);
+                schedule.push(currDate);
+            }
+            return schedule;
+        }
+
         function updateStats() {
             const today = formatDateStr(new Date());
-            const backlogTasks = db.tasks.filter(t => t.nextDate < today);
+            const backlogTasks = db.tasks.filter(t => t.nextDate < today && !t.completed && !t.isWaitingAdditionalPrompt);
             document.getElementById('stat-backlog').textContent = backlogTasks.length;
 
-            let retention = 100;
-            if (db.tasks.length > 0) {
-                let totalRatings = 0;
-                let ratingCount = 0;
-                db.tasks.forEach(t => {
-                    if (t.history && t.history.length > 0) {
-                        t.history.forEach(h => { totalRatings += h.rating; ratingCount++; });
-                    }
-                });
-                const avgRatingBonus = ratingCount > 0 ? (totalRatings / ratingCount) * 5 : 75;
-                const overduePenalty = backlogTasks.length * 6;
-                retention = Math.min(100, Math.max(20, Math.round(avgRatingBonus - overduePenalty + 30)));
-            }
-            document.getElementById('stat-retention').textContent = `${retention}%`;
+            const todayTasks = db.tasks.filter(t => t.nextDate === today || t.isWaitingAdditionalPrompt);
+            let totalSec = 0;
+            todayTasks.forEach(t => {
+                totalSec += (t.currentEstimatedSec || t.initialSec || 300);
+            });
+            document.getElementById('stat-total-time').textContent = formatSecondsToHMS(totalSec);
         }
 
         function renderHeatmap() {
@@ -856,7 +1000,7 @@
                 const dStr = formatDateStr(d);
                 const monthDay = `${d.getMonth() + 1}/${d.getDate()}`;
                 
-                const tasksOnDay = db.tasks.filter(t => t.nextDate === dStr);
+                const tasksOnDay = db.tasks.filter(t => t.allSchedules && t.allSchedules.includes(dStr));
                 const count = tasksOnDay.length;
 
                 let dotsHtml = '';
@@ -882,14 +1026,14 @@
             grid.innerHTML = html;
         }
 
-        function createPreset() {
-            const nameInput = document.getElementById('preset-name');
-            const intervalsInput = document.getElementById('preset-intervals');
+        function createInlinePreset() {
+            const nameInput = document.getElementById('inline-preset-name');
+            const intervalsInput = document.getElementById('inline-preset-intervals');
             const name = nameInput.value.trim();
             const rawIntervals = intervalsInput.value.trim();
 
             if (!name || !rawIntervals) {
-                alert('名称と間隔の両方を入力してください');
+                alert('プリセット名と間隔の両方を入力してください');
                 return;
             }
 
@@ -899,48 +1043,49 @@
                 return;
             }
 
-            db.presets.push({
+            const newPreset = {
                 id: Date.now().toString(),
                 name: name,
                 intervals: intervals
-            });
+            };
 
+            db.presets.push(newPreset);
             saveData();
+            
             nameInput.value = '';
             intervalsInput.value = '';
-            renderAll();
-            alert('新しいプリセットを追加しました！');
+            renderPresetSelect(newPreset.id);
+            alert('新しい間隔プリセットを追加しました！');
         }
 
-        function deletePreset(id) {
-            if (db.presets.length <= 1) {
-                alert('最低1つはプリセットが必要です');
-                return;
-            }
-            if (confirm('このプリセットを削除しますか？')) {
-                db.presets = db.presets.filter(p => p.id !== id);
-                saveData();
-                renderAll();
-            }
-        }
-
-        function renderPresets() {
+        function renderPresetSelect(selectedId = null) {
             const select = document.getElementById('task-preset-select');
-            if (select) {
-                select.innerHTML = db.presets.map(p => `<option value="${p.id}">${escapeHtml(p.name)} (${p.intervals.join('日 → ')}日後)</option>`).join('');
-            }
+            if (!select) return;
 
-            const list = document.getElementById('preset-list');
-            if (list) {
-                list.innerHTML = db.presets.map(p => `
-                    <div class="preset-tag">
-                        <div>
-                            <strong>${escapeHtml(p.name)}</strong><br>
-                            <span style="font-size:0.75rem; color:var(--text-sub);">${p.intervals.join('日 → ')}日後</span>
-                        </div>
-                        <button class="delete-text" onclick="deletePreset('${p.id}')">削除</button>
-                    </div>
-                `).join('');
+            select.innerHTML = db.presets.map(p => `
+                <option value="${p.id}" ${selectedId === p.id ? 'selected' : ''}>${escapeHtml(p.name)} (${p.intervals.join('日 → ')}日後)</option>
+            `).join('') + `<option value="custom_new">＋ 新しい間隔を直接追加する...</option>`;
+        }
+
+        function handlePresetChange() {
+            const select = document.getElementById('task-preset-select');
+            if (select.value === 'custom_new') {
+                document.getElementById('inline-preset-name').focus();
+            }
+        }
+
+        function openTaskModal() {
+            const startDateInput = document.getElementById('task-start-date');
+            if (startDateInput) {
+                startDateInput.value = formatDateStr(new Date());
+            }
+            renderPresetSelect();
+            document.getElementById('task-modal').classList.add('active');
+        }
+
+        function closeTaskModal(event) {
+            if (!event || event.target.id === 'task-modal' || event.target.classList.contains('modal-close-btn')) {
+                document.getElementById('task-modal').classList.remove('active');
             }
         }
 
@@ -949,15 +1094,22 @@
             const name = nameInput.value.trim();
             if (!name) return alert('タスク名を入力してください');
 
+            const min = parseInt(document.getElementById('task-time-min').value) || 0;
+            const sec = parseInt(document.getElementById('task-time-sec').value) || 0;
+            const initialSec = (min * 60) + sec;
+            if (initialSec <= 0) return alert('所要時間を正しく入力してください');
+
             const startDateInput = document.getElementById('task-start-date');
             const startDate = startDateInput.value;
             if (!startDate) return alert('開始日を選択してください');
 
             const presetId = document.getElementById('task-preset-select').value;
             const preset = db.presets.find(p => p.id === presetId);
-            if (!preset) return alert('プリセットを選択してください');
+            if (!preset) return alert('有効なプリセットを選択してください');
 
-            const firstNextDate = addDays(startDate, preset.intervals[0]);
+            const allSchedules = generateSchedule(startDate, preset.intervals);
+            const firstNextDate = allSchedules[0];
+
             const newTask = {
                 id: Date.now().toString(),
                 name: name,
@@ -965,15 +1117,22 @@
                 currentStep: 1,
                 startDate: startDate,
                 nextDate: firstNextDate,
+                allSchedules: allSchedules,
+                initialSec: initialSec,
+                currentEstimatedSec: initialSec,
+                floorSec: Math.round(initialSec * 0.7),
                 history: [],
-                isRatingMode: false
+                isRatingMode: false,
+                isPostponed: false,
+                isWaitingAdditionalPrompt: false,
+                isAdditionalMode: false
             };
 
             db.tasks.push(newTask);
             saveData();
             nameInput.value = '';
-            startDateInput.value = formatDateStr(new Date());
-            switchTab('today');
+            closeTaskModal();
+            renderAll();
         }
 
         function openChartModal(id) {
@@ -981,7 +1140,93 @@
             if (!task) return;
 
             document.getElementById('modal-task-name').textContent = task.name;
-            document.getElementById('modal-chart-content').innerHTML = renderForgettingCurveChart(task);
+
+            const history = task.history || [];
+            let points = [];
+            let cumulativeSn = 0;
+
+            history.forEach((h, idx) => {
+                let qi = getScoreFromRating(h.rating);
+                let di = 0;
+                if (idx > 0) {
+                    di = getDaysDiff(history[idx - 1].date, h.date);
+                    if (di < 0) di = 0;
+                }
+                
+                let term = qi * (1 + 0.2 * Math.log2(di + 1));
+                cumulativeSn += term;
+                let dn = Math.round(100 * (1 - Math.exp(-0.6 * cumulativeSn)));
+                dn = Math.min(100, Math.max(0, dn));
+
+                points.push({
+                    step: idx + 1,
+                    retention: dn,
+                    rating: h.rating,
+                    di: di
+                });
+            });
+
+            const currentRetention = points.length > 0 ? points[points.length - 1].retention : 0;
+
+            // SVGグラフの座標計算
+            const svgWidth = 320;
+            const svgHeight = 140;
+            const paddingX = 35;
+            const paddingY = 20;
+            const graphWidth = svgWidth - paddingX * 2;
+            const graphHeight = svgHeight - paddingY * 2;
+
+            let pathData = '';
+            let circlesHtml = '';
+
+            if (points.length === 0) {
+                circlesHtml = `<text x="${svgWidth/2}" y="${svgHeight/2}" font-size="11" text-anchor="middle" fill="var(--text-sub)">まだ学習履歴がありません</text>`;
+            } else {
+                points.forEach((p, idx) => {
+                    let cx = points.length === 1 ? paddingX + graphWidth / 2 : paddingX + (idx / (points.length - 1)) * graphWidth;
+                    let cy = paddingY + graphHeight - (p.retention / 100) * graphHeight;
+
+                    if (idx === 0) {
+                        pathData += `M ${cx} ${cy}`;
+                    } else {
+                        pathData += ` L ${cx} ${cy}`;
+                    }
+                    circlesHtml += `<circle cx="${cx}" cy="${cy}" r="4.5" fill="var(--accent)" /><text x="${cx}" y="${cy - 9}" font-size="8.5" text-anchor="middle" fill="var(--text-sub)" font-weight="bold">${p.retention}%</text>`;
+                });
+            }
+
+            document.getElementById('modal-chart-content').innerHTML = `
+                <div style="font-size:0.85rem; margin-bottom:12px; color:var(--text-main); line-height:1.6; background:#faf8f5; padding:10px 12px; border-radius:10px; border:1px solid var(--border);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <span style="font-weight: 600; color: var(--text-sub);">現在の定着度:</span>
+                        <span style="font-size: 1.2rem; font-weight: 700; color: var(--accent);">${currentRetention}%</span>
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--text-sub);">
+                        初期所要時間: ${formatSecondsToHMS(task.initialSec)} / 推定時間: ${formatSecondsToHMS(task.currentEstimatedSec || task.initialSec)}<br>
+                        学習回数: ${points.length}回完了 (全${task.intervals.length}回${task.isAdditionalMode ? ' + 追加学習中' : ''})
+                    </div>
+                </div>
+                <div style="background:#faf8f5; border:1px solid var(--border); border-radius:12px; padding:12px; text-align:center;">
+                    <div style="font-size:0.75rem; font-weight:600; color:var(--text-sub); margin-bottom:8px;">忘却曲線モデルに基づく定着度 (Dn) 推移</div>
+                    <svg width="100%" viewBox="0 0 ${svgWidth} ${svgHeight}" style="overflow:visible;">
+                        <!-- グリッド線 -->
+                        <line x1="${paddingX}" y1="${paddingY}" x2="${svgWidth - paddingX}" y2="${paddingY}" stroke="var(--border)" stroke-dasharray="2,2" />
+                        <line x1="${paddingX}" y1="${paddingY + graphHeight/2}" x2="${svgWidth - paddingX}" y2="${paddingY + graphHeight/2}" stroke="var(--border)" stroke-dasharray="2,2" />
+                        <line x1="${paddingX}" y1="${svgHeight - paddingY}" x2="${svgWidth - paddingX}" y2="${svgHeight - paddingY}" stroke="var(--border)" />
+                        
+                        <!-- 軸ラベル -->
+                        <text x="${paddingX - 6}" y="${paddingY + 4}" font-size="8.5" text-anchor="end" fill="var(--text-sub)">100%</text>
+                        <text x="${paddingX - 6}" y="${svgHeight - paddingY + 4}" font-size="8.5" text-anchor="end" fill="var(--text-sub)">0%</text>
+
+                        <!-- 曲線プロット -->
+                        ${points.length > 1 ? `<path d="${pathData}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" />` : ''}
+                        ${circlesHtml}
+                    </svg>
+                    <div style="font-size:0.7rem; color:var(--text-sub); margin-top:10px;">
+                        ※ 忘却モデルに基づいた定着度の変化を示しています。
+                    </div>
+                </div>
+            `;
             document.getElementById('chart-modal').classList.add('active');
         }
 
@@ -998,12 +1243,33 @@
             renderToday();
         }
 
-        // 定着度選択をキャンセルして元の状態に戻す関数
         function cancelRating(id) {
             const task = db.tasks.find(t => t.id === id);
             if (!task) return;
             task.isRatingMode = false;
             renderToday();
+        }
+
+        function chooseAdditionalStudy(id, accept) {
+            const task = db.tasks.find(t => t.id === id);
+            if (!task) return;
+
+            if (accept) {
+                task.isWaitingAdditionalPrompt = false;
+                task.isAdditionalMode = true;
+                const todayStr = formatDateStr(new Date());
+                task.nextDate = addDays(todayStr, 3);
+                if (!task.allSchedules) task.allSchedules = [];
+                task.allSchedules.push(task.nextDate);
+                saveData();
+                renderAll();
+                alert('追加学習モードを開始しました。3日後に最初の追加学習が設定されます。');
+            } else {
+                db.tasks = db.tasks.filter(t => t.id !== id);
+                saveData();
+                renderAll();
+                alert('タスクを終了しました。お疲れ様でした！');
+            }
         }
 
         function completeWithRating(id, rating) {
@@ -1016,28 +1282,75 @@
             task.history.push({
                 date: todayStr,
                 rating: rating,
-                step: task.currentStep
+                step: task.currentStep || (task.history.length + 1)
             });
 
-            const multiplier = rating / 3;
-
-            task.currentStep++;
-            if (task.currentStep > task.intervals.length) {
-                db.tasks = db.tasks.filter(t => t.id !== id);
-                saveData();
-                renderAll();
-                alert('全サイクルの復習が完了しました！素晴らしいです！');
-            } else {
-                const baseInterval = task.intervals[task.currentStep - 1];
-                const adjustedInterval = Math.max(1, Math.round(baseInterval * multiplier));
-                task.startDate = todayStr;
-                task.nextDate = addDays(todayStr, adjustedInterval);
-
+            if (rating === 1) {
+                task.nextDate = addDays(task.nextDate, 1);
+                task.isPostponed = true;
                 task.isRatingMode = false;
                 saveData();
                 renderAll();
-                
-                openChartModal(task.id);
+                return;
+            }
+
+            let coefficient = 1.0;
+            if (rating === 5) coefficient = 0.85;
+            else if (rating === 4) coefficient = 0.90;
+            else if (rating === 3) coefficient = 0.95;
+            else if (rating === 2) coefficient = 1.0;
+
+            let prevSec = task.currentEstimatedSec || task.initialSec;
+            let nextSec = Math.round(prevSec * coefficient);
+
+            if (nextSec < task.floorSec) {
+                nextSec = task.floorSec;
+            }
+
+            task.currentEstimatedSec = nextSec;
+
+            if (task.isAdditionalMode) {
+                let dn = calculateCurrentRetention(task);
+                if (dn >= 80) {
+                    db.tasks = db.tasks.filter(t => t.id !== id);
+                    saveData();
+                    renderAll();
+                    alert(`定着度が80%以上（${dn}%）に達したため、追加学習モードを終了しました！お疲れ様でした！`);
+                } else {
+                    task.nextDate = addDays(todayStr, 3);
+                    task.isRatingMode = false;
+                    task.isPostponed = false;
+                    if (!task.allSchedules) task.allSchedules = [];
+                    task.allSchedules.push(task.nextDate);
+                    saveData();
+                    renderAll();
+                    alert(`追加学習を記録しました。（現在の定着度: ${dn}%）。\n次回の追加学習（3日後）を設定しました。`);
+                }
+                return;
+            }
+
+            task.currentStep++;
+            if (task.currentStep > task.intervals.length) {
+                let dn = calculateCurrentRetention(task);
+                if (dn >= 80) {
+                    db.tasks = db.tasks.filter(t => t.id !== id);
+                    saveData();
+                    renderAll();
+                    alert(`全サイクルの復習が完了しました！現在の定着度は ${dn}%（80%以上）です。お疲れ様でした！`);
+                } else {
+                    task.isWaitingAdditionalPrompt = true;
+                    task.isRatingMode = false;
+                    saveData();
+                    renderAll();
+                }
+            } else {
+                task.startDate = todayStr;
+                task.nextDate = addDays(todayStr, task.intervals[task.currentStep - 1]);
+                task.isRatingMode = false;
+                task.isPostponed = false;
+                saveData();
+                renderAll();
+                alert(`復習が完了しました！\n次回の推定時間: ${formatSecondsToHMS(nextSec)}`);
             }
         }
 
@@ -1047,6 +1360,7 @@
             
             if (confirm(`「${task.name}」の次回予定日を明日に延期しますか？`)) {
                 task.nextDate = addDays(task.nextDate, 1);
+                task.isPostponed = true;
                 saveData();
                 renderAll();
             }
@@ -1060,140 +1374,133 @@
             }
         }
 
+        // 学習時間ログ追加モーダル
+        function openStudyLogModal() {
+            document.getElementById('study-date').value = formatDateStr(new Date());
+            const select = document.getElementById('study-subject-select');
+            const customInput = document.getElementById('study-subject-custom');
+            
+            let subjects = [...new Set((db.studyLogs || []).map(l => l.subject).filter(s => s && s !== 'あ'))];
+            if (subjects.length === 0) subjects = ['英語', '数学'];
+            
+            select.innerHTML = subjects.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('') + `<option value="custom_input">＋ 新しい教科名を入力...</option>`;
+            
+            customInput.style.display = 'none';
+            customInput.value = '';
+            document.getElementById('study-modal').classList.add('active');
+        }
+
+        function handleStudySubjectChange() {
+            const select = document.getElementById('study-subject-select');
+            const customInput = document.getElementById('study-subject-custom');
+            if (select.value === 'custom_input') {
+                customInput.style.display = 'block';
+                customInput.focus();
+            } else {
+                customInput.style.display = 'none';
+            }
+        }
+
+        function closeStudyModal(event) {
+            if (!event || event.target.id === 'study-modal' || event.target.classList.contains('modal-close-btn')) {
+                document.getElementById('study-modal').classList.remove('active');
+            }
+        }
+
+        function saveStudyLog() {
+            const date = document.getElementById('study-date').value;
+            const select = document.getElementById('study-subject-select');
+            const customInput = document.getElementById('study-subject-custom');
+            
+            let subject = select.value;
+            if (subject === 'custom_input') {
+                subject = customInput.value.trim();
+                if (!subject) {
+                    alert('教科名を入力してください');
+                    return;
+                }
+            }
+            if (subject === 'あ') {
+                alert('無効な教科名です');
+                return;
+            }
+
+            const h = parseInt(document.getElementById('study-time-hour').value) || 0;
+            const m = parseInt(document.getElementById('study-time-min').value) || 0;
+            const s = parseInt(document.getElementById('study-time-sec').value) || 0;
+            const totalSec = (h * 3600) + (m * 60) + s;
+
+            if (totalSec <= 0) {
+                alert('学習時間を正しく入力してください');
+                return;
+            }
+
+            if (!db.studyLogs) db.studyLogs = [];
+            db.studyLogs.push({
+                id: Date.now().toString(),
+                date: date,
+                subject: subject,
+                step: null,
+                durationSec: totalSec
+            });
+
+            saveData();
+            closeStudyModal();
+            renderAll();
+        }
+
+        function deleteStudyLog(id) {
+            if (confirm('この学習時間の記録を削除しますか？')) {
+                db.studyLogs = db.studyLogs.filter(l => l.id !== id);
+                saveData();
+                renderAll();
+            }
+        }
+
         function renderAll() {
             updateStats();
             renderHeatmap();
-            renderPresets();
             renderToday();
             renderCalendar();
+            renderStudyLogs();
             renderList();
-        }
-
-        function renderForgettingCurveChart(task) {
-            const history = task.history || [];
-            
-            if (history.length === 0) {
-                return `<div class="empty-state">まだ復習履歴がありません。<br>完了して評価をつけると忘却曲線が表示されます。</div>`;
-            }
-
-            const width = 320;
-            const height = 150;
-            const padding = 24;
-            const graphWidth = width - padding * 2;
-            const graphHeight = height - padding * 2;
-
-            let curvePoints = [];
-            
-            history.forEach((h, index) => {
-                curvePoints.push({
-                    dateStr: h.date,
-                    val: h.rating,
-                    label: `★${h.rating} (回${h.step})`
-                });
-
-                const nextTargetDate = (index < history.length - 1) ? history[index + 1].date : task.nextDate;
-                const daysSpan = diffDays(h.date, nextTargetDate);
-                
-                if (daysSpan > 1) {
-                    const midDays = Math.floor(daysSpan / 2);
-                    const midDate = addDays(h.date, midDays);
-                    const decayVal = Math.max(0.8, h.rating * Math.pow(0.7, midDays / Math.max(daysSpan, 1)));
-                    
-                    curvePoints.push({
-                        dateStr: midDate,
-                        val: decayVal,
-                        label: ''
-                    });
-                }
-            });
-
-            const todayStr = formatDateStr(new Date());
-            const allDates = curvePoints.map(p => p.dateStr);
-            if (!allDates.includes(task.nextDate)) allDates.push(task.nextDate);
-            if (!allDates.includes(todayStr)) allDates.push(todayStr);
-            allDates.sort();
-
-            const minTime = new Date(allDates[0]).getTime();
-            const maxTime = new Date(allDates[allDates.length - 1]).getTime();
-            const timeRange = Math.max(1, maxTime - minTime);
-
-            const getX = (dateStr) => {
-                const t = new Date(dateStr).getTime();
-                return padding + ((t - minTime) / timeRange) * graphWidth;
-            };
-
-            const getY = (val) => {
-                const clamped = Math.max(0, Math.min(5, val));
-                return padding + graphHeight - (clamped / 5) * graphHeight;
-            };
-
-            const points = curvePoints.map(p => ({
-                x: getX(p.dateStr),
-                y: getY(p.val),
-                val: p.val,
-                label: p.label,
-                dateStr: p.dateStr
-            }));
-
-            let pathD = `M ${points[0].x} ${points[0].y}`;
-            for (let i = 0; i < points.length - 1; i++) {
-                const p0 = points[i];
-                const p1 = points[i + 1];
-                const cpX = (p0.x + p1.x) / 2;
-                pathD += ` C ${cpX} ${p0.y}, ${cpX} ${p1.y}, ${p1.x} ${p1.y}`;
-            }
-
-            const fillPathD = `${pathD} L ${points[points.length - 1].x} ${height - padding} L ${points[0].x} ${height - padding} Z`;
-
-            let dotsHtml = points.map(p => {
-                if (!p.label) return '';
-                return `
-                    <circle cx="${p.x}" cy="${p.y}" r="5" fill="var(--accent)" />
-                    <text x="${p.x}" y="${p.y - 10}" font-size="9" fill="var(--text-sub)" text-anchor="middle" font-weight="bold">${p.label}</text>
-                `;
-            }).join('');
-
-            const nextX = getX(task.nextDate);
-
-            return `
-                <div class="curve-chart-wrap" style="margin-bottom:0;">
-                    <div class="curve-chart-header">
-                        <span>忘却曲線シミュレーション (次回予定: ${task.nextDate})</span>
-                        <span>段階: ${task.currentStep}/${task.intervals.length}</span>
-                    </div>
-                    <svg viewBox="0 0 ${width} ${height}" style="width: 100%; height: auto; overflow: visible;">
-                        <line x1="${padding}" y1="${height - padding}" x2="${width - padding}" y2="${height - padding}" stroke="var(--danger)" stroke-dasharray="2,2" opacity="0.5" />
-                        <text x="${width - padding}" y="${height - padding - 4}" font-size="8" fill="var(--danger)" text-anchor="end">忘却限界 (0)</text>
-
-                        <line x1="${nextX}" y1="${padding}" x2="${nextX}" y2="${height - padding}" stroke="var(--accent)" stroke-dasharray="3,3" opacity="0.4" />
-
-                        <path d="${fillPathD}" fill="var(--accent)" opacity="0.08" />
-                        <path d="${pathD}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
-
-                        ${dotsHtml}
-                    </svg>
-                    <div style="font-size: 0.7rem; color: var(--text-sub); margin-top: 8px; text-align: center;">
-                        ※時間が経過し次回予定日に近づくにつれて記憶が減衰します
-                    </div>
-                </div>
-            `;
         }
 
         function renderToday() {
             const container = document.getElementById('today-task-list');
             const today = formatDateStr(new Date());
-            const targetTasks = db.tasks.filter(t => t.nextDate <= today);
+            const targetTasks = db.tasks.filter(t => t.nextDate <= today || t.isWaitingAdditionalPrompt);
 
             if (targetTasks.length === 0) {
-                container.innerHTML = `<div class="empty-state">本日の復習タスクはありません。素晴らしい状態です。</div>`;
+                container.innerHTML = `<div class="empty-state">本日の復習タスクはありません。右下の「＋」ボタンから追加できます。</div>`;
                 return;
             }
 
             container.innerHTML = targetTasks.map(task => {
-                const isOverdue = task.nextDate < today;
-                const badgeClass = isOverdue ? 'badge-overdue' : 'badge-today';
-                const badgeText = isOverdue ? `期限切れ (${task.nextDate})` : '今日予定';
+                if (task.isWaitingAdditionalPrompt) {
+                    return `
+                        <div class="card">
+                            <span class="badge badge-additional">通常復習完了</span>
+                            <div class="task-title" onclick="openChartModal('${task.id}')">${escapeHtml(task.name)} <span style="font-size:0.7rem; color:var(--text-sub);">📊 詳細</span></div>
+                            <div style="font-size:0.85rem; margin: 12px 0; color:var(--text-main); line-height:1.5;">
+                                通常の復習が完了しました。現在の定着度は80%未満です。追加学習を行いますか？
+                            </div>
+                            <div class="task-actions">
+                                <button class="btn btn-complete" onclick="chooseAdditionalStudy('${task.id}', true)">追加学習する</button>
+                                <button class="btn btn-postpone" onclick="chooseAdditionalStudy('${task.id}', false)">終了する</button>
+                            </div>
+                        </div>
+                    `;
+                }
 
+                const isOverdue = task.nextDate < today;
+                let badgeClass = isOverdue ? 'badge-overdue' : 'badge-today';
+                let badgeText = isOverdue ? `期限切れ (${task.nextDate})` : '今日予定';
+                if (task.isAdditionalMode) {
+                    badgeClass = 'badge-additional';
+                    badgeText = isOverdue ? `追加学習 期限切れ (${task.nextDate})` : '追加学習予定';
+                }
+                
                 let content = '';
                 if (task.isRatingMode) {
                     content = `
@@ -1211,9 +1518,14 @@
                     `;
                 } else {
                     const lastRating = task.history && task.history.length > 0 ? task.history[task.history.length - 1].rating : '-';
+                    const estimatedTimeStr = formatSecondsToHMS(task.currentEstimatedSec || task.initialSec);
+                    let stepText = `段階: ${task.currentStep}回目 / 全${task.intervals.length}回`;
+                    if (task.isAdditionalMode) {
+                        stepText = `追加学習中 (3日おき)`;
+                    }
                     content = `
                         <div class="task-meta">
-                            <span>段階: ${task.currentStep}回目 / 全${task.intervals.length}回</span>
+                            <span>${stepText} (推定: ${estimatedTimeStr})</span>
                             <span>直近評価: ★${lastRating}</span>
                         </div>
                         <div class="task-actions">
@@ -1226,11 +1538,71 @@
                 return `
                     <div class="card">
                         <span class="badge ${badgeClass}">${badgeText}</span>
-                        <div class="task-title" onclick="openChartModal('${task.id}')">${escapeHtml(task.name)} <span style="font-size:0.7rem; color:var(--text-sub);">📊 グラフ</span></div>
+                        <div class="task-title" onclick="openChartModal('${task.id}')">${escapeHtml(task.name)} <span style="font-size:0.7rem; color:var(--text-sub);">📊 詳細</span></div>
                         ${content}
                     </div>
                 `;
             }).join('');
+        }
+
+        function renderStudyLogs() {
+            const container = document.getElementById('study-log-list');
+            if (!db.studyLogs) db.studyLogs = [];
+            db.studyLogs = db.studyLogs.filter(l => l.subject && l.subject !== 'あ');
+
+            if (db.studyLogs.length === 0) {
+                container.innerHTML = `<div class="empty-state">学習時間の記録がまだありません。<br>右下の「＋」ボタンから追加してみましょう！</div>`;
+                return;
+            }
+
+            let groupedByDate = {};
+            db.studyLogs.forEach(log => {
+                if (!groupedByDate[log.date]) groupedByDate[log.date] = [];
+                groupedByDate[log.date].push(log);
+            });
+
+            const sortedDates = Object.keys(groupedByDate).sort().reverse();
+            const todayStr = formatDateStr(new Date());
+            const yesterdayStr = formatDateStr(new Date(Date.now() - 86400000));
+
+            let html = '';
+            sortedDates.forEach(dateStr => {
+                let displayDate = dateStr;
+                if (dateStr === todayStr) displayDate = '今日';
+                else if (dateStr === yesterdayStr) displayDate = '昨日';
+
+                let logs = groupedByDate[dateStr];
+                let totalSecOnDay = logs.reduce((acc, cur) => acc + cur.durationSec, 0);
+
+                let itemsHtml = logs.map(log => {
+                    return `
+                        <div class="log-item-card">
+                            <div class="log-item-left">
+                                <div class="log-item-info">
+                                    <div class="log-item-subject">${escapeHtml(log.subject)}</div>
+                                    <div class="log-item-tag">勉強</div>
+                                </div>
+                            </div>
+                            <div class="log-item-right">
+                                <div class="log-item-time">${formatSecondsToHMS(log.durationSec)}</div>
+                                <button class="delete-text" onclick="deleteStudyLog('${log.id}')">削除</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                html += `
+                    <div class="log-date-group">
+                        <div class="log-date-header">
+                            <span>${displayDate}</span>
+                            <span class="log-date-total">${formatSecondsToHMS(totalSecOnDay)}</span>
+                        </div>
+                        ${itemsHtml}
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
         }
 
         function changeMonth(diff) {
@@ -1262,7 +1634,7 @@
                 const mStr = String(month + 1).padStart(2, '0');
                 const dStr = String(day).padStart(2, '0');
                 const dateStr = `${year}-${mStr}-${dStr}`;
-                const hasTask = db.tasks.some(t => t.nextDate === dateStr);
+                const hasTask = db.tasks.some(t => (t.allSchedules && t.allSchedules.includes(dateStr)) || t.nextDate === dateStr);
                 const isSelected = selectedDateStr === dateStr;
 
                 grid.innerHTML += `
@@ -1284,7 +1656,7 @@
             const container = document.getElementById('calendar-day-tasks');
             title.textContent = `${selectedDateStr} の予定タスク`;
 
-            const tasks = db.tasks.filter(t => t.nextDate === selectedDateStr);
+            const tasks = db.tasks.filter(t => t.nextDate === selectedDateStr || (t.allSchedules && t.allSchedules.includes(selectedDateStr) && t.nextDate === selectedDateStr));
             if (tasks.length === 0) {
                 container.innerHTML = `<div class="empty-state" style="padding: 16px 0;">この日に予定されているタスクはありません</div>`;
                 return;
@@ -1294,7 +1666,7 @@
                 <div style="padding: 8px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
                     <div style="cursor: pointer;" onclick="openChartModal('${task.id}')">
                         <div style="font-weight: 600; font-size: 0.95rem;">${escapeHtml(task.name)} <span style="font-size:0.7rem; color:var(--text-sub);">📊</span></div>
-                        <div style="font-size: 0.75rem; color: var(--text-sub);">段階: ${task.currentStep}回目</div>
+                        <div style="font-size: 0.75rem; color: var(--text-sub);">段階: ${task.isAdditionalMode ? '追加学習中' : task.currentStep + '回目'} / 推定: ${formatSecondsToHMS(task.currentEstimatedSec || task.initialSec)}</div>
                     </div>
                 </div>
             `).join('');
@@ -1307,15 +1679,21 @@
                 return;
             }
 
-            container.innerHTML = db.tasks.map(task => `
-                <div class="card">
-                    <div class="task-title" onclick="openChartModal('${task.id}')">${escapeHtml(task.name)} <span style="font-size:0.7rem; color:var(--text-sub);">📊 グラフ</span></div>
-                    <div class="task-meta" style="margin-top: 8px;">
-                        <span>次回予定: ${task.nextDate} (${task.currentStep}/${task.intervals.length}回目)</span>
-                        <button class="delete-text" onclick="deleteTask('${task.id}')">削除</button>
+            container.innerHTML = db.tasks.map(task => {
+                let statusText = `次回予定: ${task.nextDate} (${task.isAdditionalMode ? '追加学習中' : task.currentStep + '/' + task.intervals.length + '回目'})`;
+                if (task.isWaitingAdditionalPrompt) {
+                    statusText = `通常復習完了 (追加学習選択待ち)`;
+                }
+                return `
+                    <div class="card">
+                        <div class="task-title" onclick="openChartModal('${task.id}')">${escapeHtml(task.name)} <span style="font-size:0.7rem; color:var(--text-sub);">📊 詳細</span></div>
+                        <div class="task-meta" style="margin-top: 8px;">
+                            <span>${statusText}</span>
+                            <button class="delete-text" onclick="deleteTask('${task.id}')">削除</button>
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function escapeHtml(str) {
