@@ -216,7 +216,7 @@
             border-color: var(--accent);
         }
 
-        /* グラフ（定着度の視覚化）エリア */
+        /* グラフエリア */
         .chart-container {
             margin-top: 12px;
             padding: 12px;
@@ -279,7 +279,7 @@
             letter-spacing: 0.5px;
         }
 
-        input[type="text"], select {
+        input[type="text"], input[type="date"], select {
             width: 100%;
             padding: 12px;
             border: 1px solid var(--border);
@@ -290,7 +290,7 @@
             outline: none;
         }
 
-        input[type="text"]:focus, select:focus {
+        input[type="text"]:focus, input[type="date"]:focus, select:focus {
             border-color: var(--accent);
         }
 
@@ -322,6 +322,7 @@
         }
         .badge-today { background: #edf4ee; color: var(--success); }
         .badge-overdue { background: #fdf2f1; color: var(--danger); }
+        .badge-future { background: #f2eee9; color: var(--text-sub); }
 
         .empty-state {
             text-align: center;
@@ -467,6 +468,10 @@
                 <input type="text" id="task-name" placeholder="例：英単語 / 第3章の復習">
             </div>
             <div class="form-group">
+                <label>開始日（復習をスタートする日）</label>
+                <input type="date" id="task-start-date">
+            </div>
+            <div class="form-group">
                 <label>復習間隔プリセットを選択</label>
                 <select id="task-preset-select"></select>
             </div>
@@ -532,6 +537,13 @@
         window.onload = function() {
             const options = { weekday: 'short', month: 'short', day: 'numeric' };
             document.getElementById('header-date').textContent = new Date().toLocaleDateString('en-US', options);
+            
+            // 新規作成画面の開始日の初期値を「今日」に設定
+            const startDateInput = document.getElementById('task-start-date');
+            if (startDateInput) {
+                startDateInput.value = formatDateStr(new Date());
+            }
+
             renderAll();
         };
 
@@ -542,6 +554,15 @@
             const tabMap = { today: 0, calendar: 1, add: 2, presets: 3, list: 4 };
             document.querySelectorAll('.tab-btn')[tabMap[tabName]].classList.add('active');
             document.getElementById(`view-${tabName}`).classList.add('active');
+            
+            // 新規作成タブを開いたとき、開始日が空なら今日を入れる
+            if (tabName === 'add') {
+                const startDateInput = document.getElementById('task-start-date');
+                if (startDateInput && !startDateInput.value) {
+                    startDateInput.value = formatDateStr(new Date());
+                }
+            }
+
             renderAll();
         }
 
@@ -633,29 +654,32 @@
             const name = nameInput.value.trim();
             if (!name) return alert('タスク名を入力してください');
 
+            const startDateInput = document.getElementById('task-start-date');
+            const startDate = startDateInput.value;
+            if (!startDate) return alert('開始日を選択してください');
+
             const presetId = document.getElementById('task-preset-select').value;
             const preset = db.presets.find(p => p.id === presetId);
             if (!preset) return alert('プリセットを選択してください');
 
-            const today = formatDateStr(new Date());
             const newTask = {
                 id: Date.now().toString(),
                 name: name,
                 intervals: preset.intervals,
                 currentStep: 1,
-                nextDate: addDays(today, preset.intervals[0]),
+                nextDate: addDays(startDate, preset.intervals[0]), // 最初の復習日は「開始日 ＋ プリセットの最初の日数」
                 ratings: [],
                 isRatingMode: false,
-                showChart: false // グラフ表示の開閉フラグ
+                showChart: false
             };
 
             db.tasks.push(newTask);
             saveData();
             nameInput.value = '';
+            startDateInput.value = formatDateStr(new Date());
             switchTab('today');
         }
 
-        // タスク名をタップしたときにグラフの表示/非表示を切り替える
         function toggleChart(id) {
             const task = db.tasks.find(t => t.id === id);
             if (!task) return;
@@ -687,7 +711,7 @@
                 const adjustedInterval = Math.max(1, Math.round(baseInterval * multiplier));
                 task.nextDate = addDays(formatDateStr(new Date()), adjustedInterval);
                 task.isRatingMode = false;
-                task.showChart = true; // 評価直後は定着度グラフを開いて確認できるようにする
+                task.showChart = true;
             }
 
             saveData();
@@ -718,14 +742,13 @@
             renderList();
         }
 
-        // グラフHTMLを生成するヘルパー関数
         function renderRatingChart(task) {
             if (!task.ratings || task.ratings.length === 0) {
                 return `<div class="chart-container"><div class="chart-title">定着度履歴 (まだ評価がありません)</div></div>`;
             }
 
             const barsHtml = task.ratings.map((r, index) => {
-                const heightPercent = (r / 5) * 100; // 5段階評価に応じた高さ
+                const heightPercent = (r / 5) * 100;
                 return `
                     <div class="chart-bar-wrap">
                         <div class="chart-bar" style="height: ${heightPercent}%;"></div>
@@ -874,16 +897,21 @@
                 return;
             }
 
-            container.innerHTML = db.tasks.map(task => `
-                <div class="card">
-                    <div class="task-title" onclick="toggleChart('${task.id}')">${escapeHtml(task.name)} <span style="font-size:0.7rem; color:var(--text-sub);">📊 グラフ</span></div>
-                    ${task.showChart ? renderRatingChart(task) : ''}
-                    <div class="task-meta" style="margin-top: 8px;">
-                        <span>次回予定: ${task.nextDate} (${task.currentStep}/${task.intervals.length}回目)</span>
-                        <button class="delete-text" onclick="deleteTask('${task.id}')">削除</button>
+            const today = formatDateStr(new Date());
+
+            container.innerHTML = db.tasks.map(task => {
+                const isFuture = task.nextDate > today;
+                return `
+                    <div class="card">
+                        <div class="task-title" onclick="toggleChart('${task.id}')">${escapeHtml(task.name)} <span style="font-size:0.7rem; color:var(--text-sub);">📊 グラフ</span></div>
+                        ${task.showChart ? renderRatingChart(task) : ''}
+                        <div class="task-meta" style="margin-top: 8px;">
+                            <span>次回予定: ${task.nextDate} (${task.currentStep}/${task.intervals.length}回目)</span>
+                            <button class="delete-text" onclick="deleteTask('${task.id}')">削除</button>
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function escapeHtml(str) {
