@@ -309,7 +309,14 @@
     <script>
         const SUPABASE_URL = "https://fkhtkpazzykngvinkspj.supabase.co";
         const SUPABASE_KEY = "sb_publishable_d6aGwC_tcVFcb5lcvU5vGg_3IuaG2qc";
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // Supabaseクライアント（ブラウザのローカルストレージにセッションを自動保存する設定）
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+            auth: {
+                persistSession: true,
+                autoRefreshToken: true,
+                detectSessionInUrl: true
+            }
+        });
 
         let currentUser = null;
         let tasks = [];
@@ -317,6 +324,7 @@
 
         window.onload = async function() {
             try {
+                // 保持されているセッションを確認（自動ログイン）
                 const { data: { session } } = await supabaseClient.auth.getSession();
                 if (session) {
                     currentUser = session.user;
@@ -325,19 +333,9 @@
                 } else {
                     showAuthScreen();
                 }
-
-                supabaseClient.auth.onAuthStateChange(async (event, session) => {
-                    if (session) {
-                        currentUser = session.user;
-                        showAppScreen();
-                        await loadUserData();
-                    } else {
-                        currentUser = null;
-                        showAuthScreen();
-                    }
-                });
             } catch (err) {
                 console.error("初期化エラー:", err);
+                showAuthScreen();
             }
         };
 
@@ -399,7 +397,9 @@
                     showError('登録エラー: ' + error.message);
                 } else {
                     if (data?.session) {
-                        showSuccess('登録が完了し、ログインしました！');
+                        currentUser = data.session.user;
+                        showAppScreen();
+                        await loadUserData();
                     } else {
                         showSuccess('登録確認メールが送信されました。メール内のリンクを確認してください。');
                     }
@@ -408,12 +408,18 @@
                 const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
                 if (error) {
                     showError('ログイン失敗: メールアドレスまたはパスワードが正しくありません。');
+                } else if (data?.session) {
+                    currentUser = data.session.user;
+                    showAppScreen();
+                    await loadUserData();
                 }
             }
         }
 
         async function handleLogout() {
             await supabaseClient.auth.signOut();
+            currentUser = null;
+            showAuthScreen();
         }
 
         async function loadUserData() {
@@ -506,7 +512,7 @@
                 card.innerHTML = `
                     <div class="task-header">
                         <span class="task-title">${escapeHtml(task.name)}</span>
-                        <button class="secondary" style="padding: 4px 8px; font-size: 11px;" onclick="deleteTask('${task.id}')">削除</button>
+                        <button class="secondary" style="padding: 4px 8px; font-size: 11px;" onclick="deleteTask('${task.id}')">削除0</button>
                     </div>
                     <div class="task-meta">間隔: ${task.interval}日おき | ${statusText}</div>
                     <div class="rating-buttons">
